@@ -90,6 +90,7 @@ export function Dashboard() {
                 .slice(0, 5)
                 .map((event) => {
                   const client = clients.find(c => c.id === event.clientId);
+                  const process = processes.find(p => p.processNumber === event.processNumber);
                   const eventDate = new Date(event.date);
                   const isToday = eventDate.toDateString() === new Date().toDateString();
                   
@@ -105,7 +106,19 @@ export function Dashboard() {
                             {isToday && <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">Hoje</span>}
                           </div>
                           <div className="text-sm text-slate-500">
-                            {client?.fullName || 'Cliente Removido'} {event.processNumber ? `• Proc: ${event.processNumber}` : ''}
+                            {client?.fullName || 'Cliente Removido'} 
+                            {event.processNumber && (
+                              <>
+                                {' • Proc: '}
+                                {process ? (
+                                  <Link to={`/processes/${process.id}`} className="text-blue-600 hover:underline">
+                                    {event.processNumber}
+                                  </Link>
+                                ) : (
+                                  event.processNumber
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

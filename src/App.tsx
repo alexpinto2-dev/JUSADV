@@ -13,6 +13,7 @@ import { Finance } from './pages/Finance';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 import { Processes } from './pages/Processes';
+import { ProcessDetails } from './pages/ProcessDetails';
 import { Calendar } from './pages/Calendar';
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="clients" element={<Clients />} />
           <Route path="clients/:id" element={<ClientForm />} />
           <Route path="processes" element={<Processes />} />
+          <Route path="processes/:id" element={<ProcessDetails />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="documents" element={<Documents />} />
           <Route path="finance" element={<Finance />} />

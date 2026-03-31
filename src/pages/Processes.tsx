@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useClients, useProcesses } from '../store';
+import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { Process } from '../types';
 
@@ -163,7 +164,12 @@ export function Processes() {
                           {client?.fullName || 'Cliente Removido'}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                          {process.processNumber}
+                          <Link 
+                            to={`/processes/${process.id}`}
+                            className="text-yellow-600 hover:text-yellow-700 hover:underline font-medium"
+                          >
+                            {process.processNumber}
+                          </Link>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                           {process.area}

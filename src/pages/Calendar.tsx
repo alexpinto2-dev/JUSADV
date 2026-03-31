@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useClients, useEvents, useProcesses } from '../store';
+import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, Filter, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Event } from '../types';
 
@@ -172,6 +173,7 @@ export function Calendar() {
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {filteredEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((event) => {
                     const client = clients.find(c => c.id === event.clientId);
+                    const process = processes.find(p => p.processNumber === event.processNumber);
                     return (
                       <tr key={event.id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
@@ -183,7 +185,16 @@ export function Calendar() {
                           {client?.fullName || 'Cliente Removido'}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                          {event.processNumber || '-'}
+                          {process ? (
+                            <Link 
+                              to={`/processes/${process.id}`}
+                              className="text-yellow-600 hover:text-yellow-700 hover:underline"
+                            >
+                              {event.processNumber}
+                            </Link>
+                          ) : (
+                            event.processNumber || '-'
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                           {event.date ? new Date(event.date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
@@ -273,15 +284,28 @@ export function Calendar() {
                 <div className="space-y-1">
                   {dayEvents.map(event => {
                     const client = clients.find(c => c.id === event.clientId);
+                    const process = processes.find(p => p.processNumber === event.processNumber);
                     const time = new Date(event.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                     return (
                       <div 
                         key={event.id} 
-                        onClick={() => handleOpenModal(event.id)}
-                        className={`text-[10px] p-1 rounded truncate cursor-pointer hover:opacity-80 ${getTypeColor(event.type)}`}
+                        className={`text-[10px] p-1 rounded cursor-pointer hover:opacity-80 ${getTypeColor(event.type)}`}
                         title={`${time} - ${event.type}: ${client?.fullName || 'Sem cliente'}`}
                       >
-                        <span className="font-semibold">{time}</span> {event.type}
+                        <div onClick={() => handleOpenModal(event.id)} className="truncate">
+                          <span className="font-semibold">{time}</span> {event.type}
+                        </div>
+                        {process && (
+                          <div className="mt-0.5 truncate">
+                            <Link 
+                              to={`/processes/${process.id}`}
+                              className="hover:underline font-medium"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Proc: {process.processNumber}
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
