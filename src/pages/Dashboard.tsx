@@ -1,5 +1,5 @@
 import { useClients, useProcesses, useEvents } from '../store';
-import { Users, FileText, Activity, Calendar as CalendarIcon, Scale } from 'lucide-react';
+import { Users, FileText, Activity, Calendar as CalendarIcon, Scale, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
@@ -14,6 +14,28 @@ export function Dashboard() {
     { name: 'Total de Processos', stat: processes.length, icon: Scale, color: 'bg-indigo-500' },
     { name: 'Processos Ativos', stat: activeProcesses, icon: Activity, color: 'bg-green-500' },
   ];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const nextWeek = new Date(today);
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const upcomingDeadlines = processes.filter(p => {
+    if (!p.deadline || ['Arquivado', 'Finalizado'].includes(p.status)) return false;
+    const deadlineDate = new Date(p.deadline);
+    deadlineDate.setHours(23, 59, 59, 999);
+    return deadlineDate >= today && deadlineDate <= nextWeek;
+  }).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+
+  const overdueDeadlines = processes.filter(p => {
+    if (!p.deadline || ['Arquivado', 'Finalizado'].includes(p.status)) return false;
+    const deadlineDate = new Date(p.deadline);
+    deadlineDate.setHours(23, 59, 59, 999);
+    return deadlineDate < today;
+  }).sort((a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime());
+
+  const allDeadlines = [...overdueDeadlines, ...upcomingDeadlines].slice(0, 5);
 
   return (
     <div className="p-8">
@@ -35,7 +57,7 @@ export function Dashboard() {
         ))}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-slate-900">Clientes Recentes</h2>
@@ -136,6 +158,56 @@ export function Dashboard() {
               {events.filter(e => new Date(e.date).getTime() >= new Date().setHours(0,0,0,0)).length === 0 && (
                 <li className="px-6 py-8 text-center text-slate-500">
                   Nenhum agendamento futuro encontrado.
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium text-slate-900">Prazos e Alertas</h2>
+            <Link to="/processes" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+              Ver processos
+            </Link>
+          </div>
+          <div className="mt-4 overflow-hidden rounded-lg bg-white shadow border border-slate-100">
+            <ul role="list" className="divide-y divide-slate-200">
+              {allDeadlines.map((process) => {
+                const client = clients.find(c => c.id === process.clientId);
+                const deadlineDate = new Date(process.deadline);
+                deadlineDate.setHours(23, 59, 59, 999);
+                const isOverdue = deadlineDate < today;
+                
+                return (
+                  <li key={process.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50">
+                    <div className="flex items-center">
+                      <div className={`h-10 w-10 flex-shrink-0 rounded-full flex items-center justify-center ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                        <AlertCircle size={20} />
+                      </div>
+                      <div className="ml-4">
+                        <div className="font-medium text-slate-900 flex items-center gap-2">
+                          <Link to={`/processes/${process.id}`} className="hover:underline">
+                            {process.processNumber}
+                          </Link>
+                          {isOverdue && <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Vencido</span>}
+                        </div>
+                        <div className="text-sm text-slate-500">
+                          {client?.fullName || 'Cliente Removido'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-sm font-medium ${isOverdue ? 'text-red-600' : 'text-yellow-600'}`}>
+                        {new Date(process.deadline).toLocaleDateString('pt-BR')}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+              {allDeadlines.length === 0 && (
+                <li className="px-6 py-8 text-center text-slate-500">
+                  Nenhum prazo próximo ou vencido.
                 </li>
               )}
             </ul>

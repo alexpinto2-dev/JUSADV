@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Client, Payment, User, Template, CustomVar, Process, Event } from './types';
 
-function useLocalStorage<T>(key: string, initialValue: T) {
+export function useLocalStorage<T>(key: string, initialValue: T) {
   const [state, setState] = useState<T>(() => {
     const stored = localStorage.getItem(key);
     return stored ? JSON.parse(stored) : initialValue;
@@ -114,7 +114,7 @@ export function useEvents() {
 
 export function useUsers() {
   const [users, setUsers] = useLocalStorage<User[]>('rl_users', [
-    { id: '1', name: 'Rubens Lima', email: 'admin@rubenslima.com', password: 'admin', role: 'admin' }
+    { id: '1', name: 'Rubens Lima', email: 'admin@rubenslima.com', password: '123456', role: 'admin' }
   ]);
 
   const addUser = (user: Omit<User, 'id'>) => {

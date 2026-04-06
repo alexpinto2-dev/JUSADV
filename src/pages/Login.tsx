@@ -82,8 +82,9 @@ export function Login() {
               Entrar no Sistema
             </button>
           </div>
+
           <div className="text-center text-xs text-zinc-500 mt-4">
-            Acesso padrão: admin@rubenslima.com / admin
+            Acesso padrão: admin@rubenslima.com / 123456
           </div>
         </form>
       </div>

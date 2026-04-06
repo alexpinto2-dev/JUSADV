@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useClients, useEvents, useProcesses } from '../store';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, Filter, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { Event } from '../types';
+import { useGoogleLogin } from '@react-oauth/google';
 
 export function Calendar() {
   const { clients } = useClients();
@@ -13,8 +14,65 @@ export function Calendar() {
   const [typeFilter, setTypeFilter] = useState('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const syncWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsSyncing(true);
+      try {
+        const accessToken = tokenResponse.access_token;
+        
+        let syncedCount = 0;
+        for (const event of events) {
+          if (!event.googleEventId && event.date) {
+            const client = clients.find(c => c.id === event.clientId);
+            
+            const gEvent = {
+              summary: `${event.type} - ${client?.fullName || 'Cliente'}`,
+              description: `Processo: ${event.processNumber || 'N/A'}\nTipo de Ação: ${event.actionType}`,
+              start: {
+                dateTime: new Date(event.date).toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              },
+              end: {
+                dateTime: new Date(new Date(event.date).getTime() + 60 * 60 * 1000).toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              }
+            };
+
+            const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(gEvent)
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              updateEvent(event.id, { googleEventId: data.id });
+              syncedCount++;
+            }
+          }
+        }
+        
+        if (syncedCount > 0) {
+          alert(`Sincronização concluída! ${syncedCount} evento(s) adicionado(s) ao Google Agenda.`);
+        } else {
+          alert('Todos os eventos já estão sincronizados com o Google Agenda.');
+        }
+      } catch (error) {
+        console.error('Error syncing with Google Calendar:', error);
+        alert('Erro ao sincronizar com o Google Agenda.');
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    scope: 'https://www.googleapis.com/auth/calendar.events',
+  });
 
   const [formData, setFormData] = useState<Omit<Event, 'id' | 'createdAt'>>({
     type: 'Reunião',
@@ -110,7 +168,15 @@ export function Calendar() {
             Acompanhamento de reuniões e audiências.
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-3">
+          <button
+            onClick={() => syncWithGoogle()}
+            disabled={isSyncing}
+            className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-center text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600 disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
+            {isSyncing ? 'Sincronizando...' : 'Sincronizar Google Agenda'}
+          </button>
           <button
             onClick={() => handleOpenModal()}
             className="inline-flex items-center gap-2 rounded-md bg-yellow-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"

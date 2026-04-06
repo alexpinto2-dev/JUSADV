@@ -22,17 +22,18 @@ const INITIAL_STATE: Omit<Client, 'id' | 'createdAt'> = {
 export function ClientForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addClient, updateClient, getClient } = useClients();
+  const { addClient, updateClient, clients } = useClients();
   const [formData, setFormData] = useState(INITIAL_STATE);
 
   useEffect(() => {
     if (id && id !== 'new') {
-      const client = getClient(id);
+      const client = clients.find(c => c.id === id);
       if (client) {
         setFormData(client);
       }
     }
-  }, [id, getClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

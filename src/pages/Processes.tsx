@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useClients, useProcesses } from '../store';
+import { useClients, useProcesses, useLocalStorage } from '../store';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { Process } from '../types';
@@ -22,6 +22,19 @@ export function Processes() {
     deadline: '',
     value: 0
   });
+
+  const [customAreas, setCustomAreas] = useLocalStorage<string[]>('rl_custom_areas', []);
+  const [customActionTypes, setCustomActionTypes] = useLocalStorage<string[]>('rl_custom_action_types', []);
+  const [customStatuses, setCustomStatuses] = useLocalStorage<string[]>('rl_custom_statuses', []);
+
+  const [newArea, setNewArea] = useState('');
+  const [isAddingArea, setIsAddingArea] = useState(false);
+
+  const [newActionType, setNewActionType] = useState('');
+  const [isAddingActionType, setIsAddingActionType] = useState(false);
+
+  const [newStatus, setNewStatus] = useState('');
+  const [isAddingStatus, setIsAddingStatus] = useState(false);
 
   const handleOpenModal = (processId?: string) => {
     if (processId) {
@@ -263,49 +276,193 @@ export function Processes() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Área</label>
-                    <select
-                      required
-                      value={formData.area}
-                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                    >
-                      <option value="Civil">Civil</option>
-                      <option value="Empresarial">Empresarial</option>
-                      <option value="Penal">Penal</option>
-                      <option value="Tributaria">Tributária</option>
-                      <option value="Trabalhista">Trabalhista</option>
-                    </select>
+                    {isAddingArea ? (
+                      <div className="mt-1 flex rounded-md shadow-sm">
+                        <input
+                          type="text"
+                          value={newArea}
+                          onChange={(e) => setNewArea(e.target.value)}
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                          placeholder="Nova Área"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (newArea.trim()) {
+                              setCustomAreas([...customAreas, newArea.trim()]);
+                              setFormData({ ...formData, area: newArea.trim() });
+                              setNewArea('');
+                              setIsAddingArea(false);
+                            }
+                          }}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewArea('');
+                            setIsAddingArea(false);
+                          }}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-1 flex rounded-md shadow-sm">
+                        <select
+                          required
+                          value={formData.area}
+                          onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                        >
+                          <option value="Civil">Civil</option>
+                          <option value="Empresarial">Empresarial</option>
+                          <option value="Penal">Penal</option>
+                          <option value="Tributaria">Tributária</option>
+                          <option value="Trabalhista">Trabalhista</option>
+                          {customAreas.map(area => (
+                            <option key={area} value={area}>{area}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingArea(true)}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Tipo Ação</label>
-                    <select
-                      required
-                      value={formData.actionType}
-                      onChange={(e) => setFormData({ ...formData, actionType: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                    >
-                      <option value="Reclamação Trabalhista">Reclamação Trabalhista</option>
-                      <option value="Indenizatoria">Indenizatória</option>
-                      <option value="Familiar">Familiar</option>
-                      <option value="Cobrança">Cobrança</option>
-                    </select>
+                    {isAddingActionType ? (
+                      <div className="mt-1 flex rounded-md shadow-sm">
+                        <input
+                          type="text"
+                          value={newActionType}
+                          onChange={(e) => setNewActionType(e.target.value)}
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                          placeholder="Novo Tipo de Ação"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (newActionType.trim()) {
+                              setCustomActionTypes([...customActionTypes, newActionType.trim()]);
+                              setFormData({ ...formData, actionType: newActionType.trim() });
+                              setNewActionType('');
+                              setIsAddingActionType(false);
+                            }
+                          }}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewActionType('');
+                            setIsAddingActionType(false);
+                          }}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-1 flex rounded-md shadow-sm">
+                        <select
+                          required
+                          value={formData.actionType}
+                          onChange={(e) => setFormData({ ...formData, actionType: e.target.value })}
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                        >
+                          <option value="Reclamação Trabalhista">Reclamação Trabalhista</option>
+                          <option value="Indenizatoria">Indenizatória</option>
+                          <option value="Familiar">Familiar</option>
+                          <option value="Cobrança">Cobrança</option>
+                          {customActionTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingActionType(true)}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700">Status do Processo</label>
-                    <select
-                      required
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                    >
-                      <option value="Em Andamento">Em Andamento</option>
-                      <option value="Sentenciado">Sentenciado</option>
-                      <option value="Suspenso">Suspenso</option>
-                      <option value="Arquivado">Arquivado</option>
-                      <option value="Finalizado">Finalizado</option>
-                    </select>
+                    {isAddingStatus ? (
+                      <div className="mt-1 flex rounded-md shadow-sm">
+                        <input
+                          type="text"
+                          value={newStatus}
+                          onChange={(e) => setNewStatus(e.target.value)}
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                          placeholder="Novo Status"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (newStatus.trim()) {
+                              setCustomStatuses([...customStatuses, newStatus.trim()]);
+                              setFormData({ ...formData, status: newStatus.trim() });
+                              setNewStatus('');
+                              setIsAddingStatus(false);
+                            }
+                          }}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewStatus('');
+                            setIsAddingStatus(false);
+                          }}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-1 flex rounded-md shadow-sm">
+                        <select
+                          required
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          className="block w-full rounded-none rounded-l-md border-0 py-1.5 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                        >
+                          <option value="Em Andamento">Em Andamento</option>
+                          <option value="Sentenciado">Sentenciado</option>
+                          <option value="Suspenso">Suspenso</option>
+                          <option value="Arquivado">Arquivado</option>
+                          <option value="Finalizado">Finalizado</option>
+                          {customStatuses.map(status => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingStatus(true)}
+                          className="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>

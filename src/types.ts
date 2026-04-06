@@ -36,6 +36,7 @@ export interface Event {
   date: string;
   actionType: 'Reclamação Trabalhista' | 'Indenizatoria' | 'Familiar' | 'Cobrança' | string;
   createdAt: string;
+  googleEventId?: string;
 }
 
 export type DocumentType = 'procuracao' | 'contrato' | 'hipossuficiencia';
