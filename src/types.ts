@@ -1,5 +1,16 @@
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  customDomain?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  createdAt: string;
+}
+
 export interface Client {
   id: string;
+  tenantId?: string;
   fullName: string;
   cpf: string;
   rg: string;
@@ -18,6 +29,7 @@ export interface Client {
 
 export interface Process {
   id: string;
+  tenantId?: string;
   clientId: string;
   processNumber: string;
   area: 'Civil' | 'Empresarial' | 'Penal' | 'Tributaria' | 'Trabalhista' | string;
@@ -30,6 +42,7 @@ export interface Process {
 
 export interface Event {
   id: string;
+  tenantId?: string;
   type: 'Reunião' | 'Audiência' | 'Visita' | 'Consultoria' | string;
   clientId: string;
   processNumber: string;
@@ -43,6 +56,7 @@ export type DocumentType = 'procuracao' | 'contrato' | 'hipossuficiencia';
 
 export interface Payment {
   id: string;
+  tenantId?: string;
   clientId: string;
   description: string;
   amount: number;
@@ -54,14 +68,16 @@ export interface Payment {
 
 export interface User {
   id: string;
+  tenantId?: string;
   name: string;
   email: string;
   password?: string;
-  role: 'admin' | 'advogado';
+  role: 'superadmin' | 'admin' | 'advogado';
 }
 
 export interface Template {
   id: DocumentType | string;
+  tenantId?: string;
   type: DocumentType | string;
   title: string;
   content: string;
@@ -69,6 +85,7 @@ export interface Template {
 
 export interface CustomVar {
   id: string;
+  tenantId?: string;
   key: string;
   value: string;
 }

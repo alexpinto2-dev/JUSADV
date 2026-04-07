@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useClients } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 import { Plus, Search, MoreVertical, FileText, Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 export function Clients() {
   const { clients, deleteClient } = useClients();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
   const [search, setSearch] = useState('');
 
   const filteredClients = clients.filter((c) =>
@@ -23,7 +25,7 @@ export function Clients() {
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <Link
-            to="/clients/new"
+            to={getTenantPath('/clients/new')}
             className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
             <Plus size={16} />
@@ -89,14 +91,14 @@ export function Clients() {
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <div className="flex justify-end gap-2">
                           <Link
-                            to={`/documents?client=${client.id}`}
+                            to={getTenantPath(`/documents?client=${client.id}`)}
                             className="text-blue-600 hover:text-blue-900"
                             title="Gerar Documento"
                           >
                             <FileText size={18} />
                           </Link>
                           <Link
-                            to={`/clients/${client.id}`}
+                            to={getTenantPath(`/clients/${client.id}`)}
                             className="text-slate-600 hover:text-slate-900"
                             title="Editar"
                           >

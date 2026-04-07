@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -8,11 +9,12 @@ export function Login() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
-      navigate('/');
+    if (login(email, password, currentTenant?.id)) {
+      navigate(getTenantPath('/'));
     } else {
       setError('Credenciais inválidas. Tente novamente.');
     }
@@ -22,15 +24,19 @@ export function Login() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center">
-          <div className="relative flex items-center justify-center w-20 h-20 mb-2">
-            <span className="absolute text-6xl font-serif text-yellow-600/80 -ml-4">R</span>
-            <span className="absolute text-6xl font-serif text-yellow-500 mt-4 ml-4">L</span>
-          </div>
-          <h2 className="mt-6 text-center text-2xl font-serif tracking-[0.2em] text-yellow-500">
-            RUBENS LIMA
+          {currentTenant?.logoUrl ? (
+            <img src={currentTenant.logoUrl} alt={currentTenant.name} className="h-20 mb-2" />
+          ) : (
+            <div className="relative flex items-center justify-center w-20 h-20 mb-2">
+              <span className="absolute text-6xl font-serif text-yellow-600/80 -ml-4">R</span>
+              <span className="absolute text-6xl font-serif text-yellow-500 mt-4 ml-4">L</span>
+            </div>
+          )}
+          <h2 className="mt-6 text-center text-2xl font-serif tracking-[0.2em] text-yellow-500" style={{ color: currentTenant?.primaryColor || '#eab308' }}>
+            {currentTenant?.name?.toUpperCase() || 'RUBENS LIMA'}
           </h2>
           <p className="mt-2 text-center text-sm text-zinc-400 uppercase tracking-widest">
-            Advocacia e Consultoria
+            Acesso ao Sistema
           </p>
         </div>
         <form className="mt-8 space-y-6 bg-zinc-900 p-8 rounded-xl border border-zinc-800 shadow-2xl" onSubmit={handleSubmit}>
@@ -78,6 +84,7 @@ export function Login() {
             <button
               type="submit"
               className="group relative flex w-full justify-center rounded-md bg-yellow-600 px-3 py-3 text-sm font-semibold text-zinc-950 hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600 transition-colors"
+              style={{ backgroundColor: currentTenant?.primaryColor || '#ca8a04' }}
             >
               Entrar no Sistema
             </button>

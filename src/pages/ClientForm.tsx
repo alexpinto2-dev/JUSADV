@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useClients } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 import { Client } from '../types';
 
 const INITIAL_STATE: Omit<Client, 'id' | 'createdAt'> = {
@@ -23,6 +24,7 @@ export function ClientForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addClient, updateClient, clients } = useClients();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
   const [formData, setFormData] = useState(INITIAL_STATE);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export function ClientForm() {
     } else {
       addClient(formData);
     }
-    navigate('/clients');
+    navigate(getTenantPath('/clients'));
   };
 
   return (
@@ -283,7 +285,7 @@ export function ClientForm() {
         <div className="mt-8 flex items-center justify-end gap-x-6">
           <button
             type="button"
-            onClick={() => navigate('/clients')}
+            onClick={() => navigate(getTenantPath('/clients'))}
             className="text-sm font-semibold leading-6 text-slate-900"
           >
             Cancelar

@@ -1,39 +1,53 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Users, FileText, LayoutDashboard, Settings, DollarSign, LogOut, Scale, Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const navItems = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Clientes', href: '/clients', icon: Users },
-    { name: 'Processos', href: '/processes', icon: Scale },
-    { name: 'Calendário', href: '/calendar', icon: CalendarIcon },
-    { name: 'Documentos', href: '/documents', icon: FileText },
-    { name: 'Financeiro', href: '/finance', icon: DollarSign },
+    { name: 'Dashboard', href: getTenantPath('/'), icon: LayoutDashboard },
+    { name: 'Clientes', href: getTenantPath('/clients'), icon: Users },
+    { name: 'Processos', href: getTenantPath('/processes'), icon: Scale },
+    { name: 'Calendário', href: getTenantPath('/calendar'), icon: CalendarIcon },
+    { name: 'Documentos', href: getTenantPath('/documents'), icon: FileText },
+    { name: 'Financeiro', href: getTenantPath('/finance'), icon: DollarSign },
   ];
 
-  if (currentUser?.role === 'admin') {
-    navItems.push({ name: 'Configurações', href: '/settings', icon: Settings });
+  if (currentUser?.role === 'admin' || currentUser?.role === 'superadmin') {
+    navItems.push({ name: 'Configurações', href: getTenantPath('/settings'), icon: Settings });
   }
 
   return (
     <div className="flex h-screen w-64 flex-col border-r border-zinc-200 bg-zinc-50">
       <div className="flex h-28 flex-col items-center justify-center bg-zinc-950 border-b border-zinc-800 pt-4 pb-2">
-        <div className="relative flex items-center justify-center w-12 h-12 mb-1">
-          <span className="absolute text-4xl font-serif text-yellow-600/80 -ml-3">R</span>
-          <span className="absolute text-4xl font-serif text-yellow-500 mt-3 ml-3">L</span>
-        </div>
-        <h1 className="text-sm tracking-[0.2em] text-yellow-500 font-serif mt-2">RUBENS LIMA</h1>
+        {currentTenant?.logoUrl ? (
+          <img src={currentTenant.logoUrl} alt={currentTenant.name} className="h-12 mb-1" />
+        ) : (
+          <div className="relative flex items-center justify-center w-12 h-12 mb-1">
+            <span className="absolute text-4xl font-serif text-yellow-600/80 -ml-3">R</span>
+            <span className="absolute text-4xl font-serif text-yellow-500 mt-3 ml-3">L</span>
+          </div>
+        )}
+        <h1 className="text-sm tracking-[0.2em] font-serif mt-2" style={{ color: currentTenant?.primaryColor || '#eab308' }}>
+          {currentTenant?.name?.toUpperCase() || 'RUBENS LIMA'}
+        </h1>
         <span className="text-[0.5rem] tracking-widest text-zinc-500 mt-1 uppercase">Advocacia e Consultoria</span>
       </div>
       
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.href || (location.pathname.startsWith(item.href) && item.href !== '/');
+          const isActive = location.pathname === item.href || (location.pathname.startsWith(item.href) && item.href !== getTenantPath('/'));
           return (
             <Link
               key={item.name}
@@ -61,7 +75,7 @@ export function Sidebar() {
       <div className="border-t border-zinc-200 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-yellow-600 flex items-center justify-center text-white font-medium">
+            <div className="h-8 w-8 rounded-full flex items-center justify-center text-white font-medium" style={{ backgroundColor: currentTenant?.primaryColor || '#ca8a04' }}>
               {currentUser?.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col">
@@ -69,7 +83,7 @@ export function Sidebar() {
               <span className="text-xs text-zinc-500 capitalize">{currentUser?.role}</span>
             </div>
           </div>
-          <button onClick={logout} className="text-zinc-400 hover:text-red-500" title="Sair">
+          <button onClick={handleLogout} className="text-zinc-400 hover:text-red-500" title="Sair">
             <LogOut size={18} />
           </button>
         </div>

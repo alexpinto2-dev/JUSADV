@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useClients, useProcesses, useLocalStorage } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, Filter } from 'lucide-react';
 import { Process } from '../types';
@@ -7,6 +8,7 @@ import { Process } from '../types';
 export function Processes() {
   const { clients } = useClients();
   const { processes, addProcess, updateProcess, deleteProcess } = useProcesses();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
@@ -178,7 +180,7 @@ export function Processes() {
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                           <Link 
-                            to={`/processes/${process.id}`}
+                            to={getTenantPath(`/processes/${process.id}`)}
                             className="text-yellow-600 hover:text-yellow-700 hover:underline font-medium"
                           >
                             {process.processNumber}

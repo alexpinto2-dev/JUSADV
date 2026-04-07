@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Client, Payment, User, Template, CustomVar, Process, Event } from './types';
+import { Client, Payment, User, Template, CustomVar, Process, Event, Tenant } from './types';
+import { useCurrentTenant } from './contexts/TenantContext';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const [state, setState] = useState<T>(() => {
@@ -14,25 +15,63 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   return [state, setState] as const;
 }
 
-export function useClients() {
-  const [clients, setClients] = useLocalStorage<Client[]>('rl_clients', []);
+export function useTenants() {
+  const [tenants, setTenants] = useLocalStorage<Tenant[]>('rl_tenants', [
+    {
+      id: 'default-tenant-1',
+      name: 'Rubens Lima Advocacia',
+      slug: 'rubenslima',
+      primaryColor: '#ca8a04',
+      createdAt: new Date().toISOString()
+    }
+  ]);
 
-  const addClient = (client: Omit<Client, 'id' | 'createdAt'>) => {
-    const newClient: Client = {
-      ...client,
+  const addTenant = (tenant: Omit<Tenant, 'id' | 'createdAt'>) => {
+    const newTenant: Tenant = {
+      ...tenant,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     };
-    setClients((prev) => [...prev, newClient]);
+    setTenants((prev) => [...prev, newTenant]);
+    return newTenant;
+  };
+
+  const updateTenant = (id: string, updates: Partial<Tenant>) => {
+    setTenants((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  };
+
+  const deleteTenant = (id: string) => {
+    setTenants((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  return { tenants, addTenant, updateTenant, deleteTenant };
+}
+
+export function useClients() {
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allClients, setAllClients] = useLocalStorage<Client[]>('rl_clients', []);
+
+  const clients = allClients.filter(c => c.tenantId === tenantId || (!c.tenantId && tenantId === 'default-tenant-1'));
+
+  const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'tenantId'>) => {
+    if (!tenantId) return null;
+    const newClient: Client = {
+      ...client,
+      id: crypto.randomUUID(),
+      tenantId,
+      createdAt: new Date().toISOString(),
+    };
+    setAllClients((prev) => [...prev, newClient]);
     return newClient;
   };
 
   const updateClient = (id: string, updates: Partial<Client>) => {
-    setClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+    setAllClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   };
 
   const deleteClient = (id: string) => {
-    setClients((prev) => prev.filter((c) => c.id !== id));
+    setAllClients((prev) => prev.filter((c) => c.id !== id));
   };
 
   const getClient = (id: string) => clients.find((c) => c.id === id);
@@ -41,117 +80,146 @@ export function useClients() {
 }
 
 export function usePayments() {
-  const [payments, setPayments] = useLocalStorage<Payment[]>('rl_payments', []);
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allPayments, setAllPayments] = useLocalStorage<Payment[]>('rl_payments', []);
 
-  const addPayment = (payment: Omit<Payment, 'id' | 'createdAt'>) => {
+  const payments = allPayments.filter(p => p.tenantId === tenantId || (!p.tenantId && tenantId === 'default-tenant-1'));
+
+  const addPayment = (payment: Omit<Payment, 'id' | 'createdAt' | 'tenantId'>) => {
+    if (!tenantId) return null;
     const newPayment: Payment = {
       ...payment,
       id: crypto.randomUUID(),
+      tenantId,
       createdAt: new Date().toISOString(),
     };
-    setPayments((prev) => [...prev, newPayment]);
+    setAllPayments((prev) => [...prev, newPayment]);
     return newPayment;
   };
 
   const updatePayment = (id: string, updates: Partial<Payment>) => {
-    setPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setAllPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
   };
 
   const deletePayment = (id: string) => {
-    setPayments((prev) => prev.filter((p) => p.id !== id));
+    setAllPayments((prev) => prev.filter((p) => p.id !== id));
   };
 
   return { payments, addPayment, updatePayment, deletePayment };
 }
 
 export function useProcesses() {
-  const [processes, setProcesses] = useLocalStorage<Process[]>('rl_processes', []);
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allProcesses, setAllProcesses] = useLocalStorage<Process[]>('rl_processes', []);
 
-  const addProcess = (process: Omit<Process, 'id' | 'createdAt'>) => {
+  const processes = allProcesses.filter(p => p.tenantId === tenantId || (!p.tenantId && tenantId === 'default-tenant-1'));
+
+  const addProcess = (process: Omit<Process, 'id' | 'createdAt' | 'tenantId'>) => {
+    if (!tenantId) return null;
     const newProcess: Process = {
       ...process,
       id: crypto.randomUUID(),
+      tenantId,
       createdAt: new Date().toISOString(),
     };
-    setProcesses((prev) => [...prev, newProcess]);
+    setAllProcesses((prev) => [...prev, newProcess]);
     return newProcess;
   };
 
   const updateProcess = (id: string, updates: Partial<Process>) => {
-    setProcesses((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setAllProcesses((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
   };
 
   const deleteProcess = (id: string) => {
-    setProcesses((prev) => prev.filter((p) => p.id !== id));
+    setAllProcesses((prev) => prev.filter((p) => p.id !== id));
   };
 
   return { processes, addProcess, updateProcess, deleteProcess };
 }
 
 export function useEvents() {
-  const [events, setEvents] = useLocalStorage<Event[]>('rl_events', []);
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allEvents, setAllEvents] = useLocalStorage<Event[]>('rl_events', []);
 
-  const addEvent = (event: Omit<Event, 'id' | 'createdAt'>) => {
+  const events = allEvents.filter(e => e.tenantId === tenantId || (!e.tenantId && tenantId === 'default-tenant-1'));
+
+  const addEvent = (event: Omit<Event, 'id' | 'createdAt' | 'tenantId'>) => {
+    if (!tenantId) return null;
     const newEvent: Event = {
       ...event,
       id: crypto.randomUUID(),
+      tenantId,
       createdAt: new Date().toISOString(),
     };
-    setEvents((prev) => [...prev, newEvent]);
+    setAllEvents((prev) => [...prev, newEvent]);
     return newEvent;
   };
 
   const updateEvent = (id: string, updates: Partial<Event>) => {
-    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    setAllEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
   };
 
   const deleteEvent = (id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+    setAllEvents((prev) => prev.filter((e) => e.id !== id));
   };
 
   return { events, addEvent, updateEvent, deleteEvent };
 }
 
 export function useUsers() {
-  const [users, setUsers] = useLocalStorage<User[]>('rl_users', [
-    { id: '1', name: 'Rubens Lima', email: 'admin@rubenslima.com', password: '123456', role: 'admin' }
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allUsers, setAllUsers] = useLocalStorage<User[]>('rl_users', [
+    { id: '1', tenantId: 'default-tenant-1', name: 'Rubens Lima', email: 'admin@rubenslima.com', password: '123456', role: 'admin' },
+    { id: 'super-1', name: 'Super Admin', email: 'super@admin.com', password: 'super', role: 'superadmin' }
   ]);
 
-  const addUser = (user: Omit<User, 'id'>) => {
-    const newUser: User = { ...user, id: crypto.randomUUID() };
-    setUsers((prev) => [...prev, newUser]);
+  const users = allUsers.filter(u => u.tenantId === tenantId || (!u.tenantId && tenantId === 'default-tenant-1') || u.role === 'superadmin');
+
+  const addUser = (user: Omit<User, 'id' | 'tenantId'>) => {
+    if (!tenantId) return;
+    const newUser: User = { ...user, id: crypto.randomUUID(), tenantId };
+    setAllUsers((prev) => [...prev, newUser]);
   };
 
   const updateUser = (id: string, updates: Partial<User>) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
+    setAllUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
   };
 
   const deleteUser = (id: string) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    setAllUsers((prev) => prev.filter((u) => u.id !== id));
   };
 
-  return { users, addUser, updateUser, deleteUser };
+  return { users, allUsers, addUser, updateUser, deleteUser };
 }
 
 export function useCustomVars() {
-  const [customVars, setCustomVars] = useLocalStorage<CustomVar[]>('rl_custom_vars', [
-    { id: '1', key: 'NOME_ADVOGADO', value: 'Rubens Lima' },
-    { id: '2', key: 'OAB', value: '12345/SP' },
-    { id: '3', key: 'ENDERECO_ESCRITORIO', value: 'Rua Exemplo, 123, Centro, São Paulo - SP' }
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allCustomVars, setAllCustomVars] = useLocalStorage<CustomVar[]>('rl_custom_vars', [
+    { id: '1', tenantId: 'default-tenant-1', key: 'NOME_ADVOGADO', value: 'Rubens Lima' },
+    { id: '2', tenantId: 'default-tenant-1', key: 'OAB', value: '12345/SP' },
+    { id: '3', tenantId: 'default-tenant-1', key: 'ENDERECO_ESCRITORIO', value: 'Rua Exemplo, 123, Centro, São Paulo - SP' }
   ]);
 
+  const customVars = allCustomVars.filter(v => v.tenantId === tenantId || (!v.tenantId && tenantId === 'default-tenant-1'));
+
   const addCustomVar = (key: string, value: string) => {
+    if (!tenantId) return;
     const formattedKey = key.toUpperCase().replace(/[^A-Z0-9_]/g, '');
-    setCustomVars((prev) => [...prev, { id: crypto.randomUUID(), key: formattedKey, value }]);
+    setAllCustomVars((prev) => [...prev, { id: crypto.randomUUID(), tenantId, key: formattedKey, value }]);
   };
 
   const updateCustomVar = (id: string, key: string, value: string) => {
     const formattedKey = key.toUpperCase().replace(/[^A-Z0-9_]/g, '');
-    setCustomVars((prev) => prev.map((v) => (v.id === id ? { ...v, key: formattedKey, value } : v)));
+    setAllCustomVars((prev) => prev.map((v) => (v.id === id ? { ...v, key: formattedKey, value } : v)));
   };
 
   const deleteCustomVar = (id: string) => {
-    setCustomVars((prev) => prev.filter((v) => v.id !== id));
+    setAllCustomVars((prev) => prev.filter((v) => v.id !== id));
   };
 
   return { customVars, addCustomVar, updateCustomVar, deleteCustomVar };
@@ -160,6 +228,7 @@ export function useCustomVars() {
 const defaultTemplates: Template[] = [
   {
     id: 'procuracao',
+    tenantId: 'default-tenant-1',
     type: 'procuracao',
     title: 'Procuração Ad Judicia et Extra',
     content: `<h1 style="text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 30px; text-transform: uppercase;">Procuração Ad Judicia et Extra</h1>
@@ -175,6 +244,7 @@ const defaultTemplates: Template[] = [
   },
   {
     id: 'hipossuficiencia',
+    tenantId: 'default-tenant-1',
     type: 'hipossuficiencia',
     title: 'Declaração de Hipossuficiência',
     content: `<h1 style="text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 30px; text-transform: uppercase;">Declaração de Hipossuficiência</h1>
@@ -189,6 +259,7 @@ const defaultTemplates: Template[] = [
   },
   {
     id: 'contrato',
+    tenantId: 'default-tenant-1',
     type: 'contrato',
     title: 'Contrato de Prestação de Serviços',
     content: `<h1 style="text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 30px; text-transform: uppercase;">Contrato de Prestação de Serviços Advocatícios</h1>
@@ -216,10 +287,14 @@ const defaultTemplates: Template[] = [
 ];
 
 export function useTemplates() {
-  const [templates, setTemplates] = useLocalStorage<Template[]>('rl_templates', defaultTemplates);
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [allTemplates, setAllTemplates] = useLocalStorage<Template[]>('rl_templates', defaultTemplates);
+
+  const templates = allTemplates.filter(t => t.tenantId === tenantId || (!t.tenantId && tenantId === 'default-tenant-1'));
 
   const updateTemplate = (id: string, content: string) => {
-    setTemplates(prev => prev.map(t => t.id === id ? { ...t, content } : t));
+    setAllTemplates(prev => prev.map(t => t.id === id ? { ...t, content } : t));
   };
 
   return { templates, updateTemplate };
@@ -227,10 +302,14 @@ export function useTemplates() {
 
 export function useAuth() {
   const [currentUser, setCurrentUser] = useLocalStorage<User | null>('rl_auth', null);
-  const { users } = useUsers();
+  const { allUsers } = useUsers();
 
-  const login = (email: string, pass: string) => {
-    const user = users.find((u) => u.email === email && u.password === pass);
+  const login = (email: string, pass: string, tenantId?: string) => {
+    const user = allUsers.find((u) => 
+      u.email === email && 
+      u.password === pass && 
+      (u.role === 'superadmin' || u.tenantId === tenantId || (!u.tenantId && tenantId === 'default-tenant-1'))
+    );
     if (user) {
       setCurrentUser(user);
       return true;

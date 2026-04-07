@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { useUsers, useTemplates, useAuth, useCustomVars } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 import { Plus, Edit, Trash2, Upload, Save } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 export function Settings() {
   const { currentUser } = useAuth();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
   const { users, addUser, updateUser, deleteUser } = useUsers();
   const { templates, updateTemplate } = useTemplates();
   const { customVars, addCustomVar, updateCustomVar, deleteCustomVar } = useCustomVars();
@@ -25,8 +27,8 @@ export function Settings() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(templates[0]?.id || '');
   const [templateContent, setTemplateContent] = useState<string>(templates[0]?.content || '');
 
-  if (currentUser?.role !== 'admin') {
-    return <Navigate to="/" replace />;
+  if (currentUser?.role !== 'admin' && currentUser?.role !== 'superadmin') {
+    return <Navigate to={getTenantPath('/')} replace />;
   }
 
   const handleOpenUserModal = (userId?: string) => {

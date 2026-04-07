@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useProcesses, useClients, useEvents } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 import { ArrowLeft, Calendar as CalendarIcon, FileText, User, Tag, Clock, DollarSign, Activity } from 'lucide-react';
 
 export function ProcessDetails() {
@@ -9,6 +10,7 @@ export function ProcessDetails() {
   const { processes } = useProcesses();
   const { clients } = useClients();
   const { events } = useEvents();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
 
   const process = processes.find(p => p.id === id);
   const client = process ? clients.find(c => c.id === process.clientId) : null;
@@ -19,7 +21,7 @@ export function ProcessDetails() {
       <div className="p-8 text-center">
         <h2 className="text-2xl font-bold text-slate-900">Processo não encontrado</h2>
         <button
-          onClick={() => navigate('/processes')}
+          onClick={() => navigate(getTenantPath('/processes'))}
           className="mt-4 inline-flex items-center gap-2 text-yellow-600 hover:text-yellow-700"
         >
           <ArrowLeft size={20} />
@@ -54,7 +56,7 @@ export function ProcessDetails() {
     <div className="p-8 max-w-5xl mx-auto">
       <div className="mb-8 flex items-center gap-4">
         <button
-          onClick={() => navigate('/processes')}
+          onClick={() => navigate(getTenantPath('/processes'))}
           className="p-2 rounded-full hover:bg-slate-100 text-slate-600 transition-colors"
         >
           <ArrowLeft size={24} />
@@ -150,7 +152,7 @@ export function ProcessDetails() {
             </h2>
             {client ? (
               <div>
-                <Link to={`/clients/${client.id}`} className="text-lg font-medium text-yellow-600 hover:text-yellow-700 hover:underline block mb-2">
+                <Link to={getTenantPath(`/clients/${client.id}`)} className="text-lg font-medium text-yellow-600 hover:text-yellow-700 hover:underline block mb-2">
                   {client.fullName}
                 </Link>
                 <div className="space-y-2 mt-4">

@@ -1,4 +1,5 @@
 import { useClients, useProcesses, useEvents } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 import { Users, FileText, Activity, Calendar as CalendarIcon, Scale, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -6,6 +7,7 @@ export function Dashboard() {
   const { clients } = useClients();
   const { processes } = useProcesses();
   const { events } = useEvents();
+  const { currentTenant, getTenantPath } = useCurrentTenant();
 
   const activeProcesses = processes.filter(p => !['Arquivado', 'Finalizado'].includes(p.status)).length;
 
@@ -61,7 +63,7 @@ export function Dashboard() {
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-slate-900">Clientes Recentes</h2>
-            <Link to="/clients" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+            <Link to={getTenantPath('/clients')} className="text-sm font-medium text-blue-600 hover:text-blue-500">
               Ver todos
             </Link>
           </div>
@@ -80,7 +82,7 @@ export function Dashboard() {
                   </div>
                   <div className="flex gap-2">
                     <Link
-                      to={`/documents?client=${client.id}`}
+                      to={getTenantPath(`/documents?client=${client.id}`)}
                       className="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
                     >
                       Gerar Documento
@@ -100,7 +102,7 @@ export function Dashboard() {
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-slate-900">Próximos Agendamentos</h2>
-            <Link to="/calendar" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+            <Link to={getTenantPath('/calendar')} className="text-sm font-medium text-blue-600 hover:text-blue-500">
               Ver calendário
             </Link>
           </div>
@@ -133,7 +135,7 @@ export function Dashboard() {
                               <>
                                 {' • Proc: '}
                                 {process ? (
-                                  <Link to={`/processes/${process.id}`} className="text-blue-600 hover:underline">
+                                  <Link to={getTenantPath(`/processes/${process.id}`)} className="text-blue-600 hover:underline">
                                     {event.processNumber}
                                   </Link>
                                 ) : (
@@ -167,7 +169,7 @@ export function Dashboard() {
         <div>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-slate-900">Prazos e Alertas</h2>
-            <Link to="/processes" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+            <Link to={getTenantPath('/processes')} className="text-sm font-medium text-blue-600 hover:text-blue-500">
               Ver processos
             </Link>
           </div>
@@ -187,7 +189,7 @@ export function Dashboard() {
                       </div>
                       <div className="ml-4">
                         <div className="font-medium text-slate-900 flex items-center gap-2">
-                          <Link to={`/processes/${process.id}`} className="hover:underline">
+                          <Link to={getTenantPath(`/processes/${process.id}`)} className="hover:underline">
                             {process.processNumber}
                           </Link>
                           {isOverdue && <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Vencido</span>}
