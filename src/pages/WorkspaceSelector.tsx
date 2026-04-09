@@ -25,7 +25,7 @@ export function WorkspaceSelector() {
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center">
           <h2 className="mt-6 text-center text-2xl font-serif tracking-[0.2em] text-yellow-500">
-            MICRO SAAS
+            JUSADV
           </h2>
           <p className="mt-2 text-center text-sm text-zinc-400">
             Digite o endereço do seu workspace

