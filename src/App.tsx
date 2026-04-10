@@ -17,7 +17,7 @@ import { ProcessDetails } from './pages/ProcessDetails';
 import { Calendar } from './pages/Calendar';
 import { WorkspaceSelector } from './pages/WorkspaceSelector';
 import { SuperAdminLogin, SuperAdminDashboard } from './pages/SuperAdmin';
-import { TenantProvider } from './contexts/TenantContext';
+import { TenantProvider, useCurrentTenant } from './contexts/TenantContext';
 import { useTenants, useAuth } from './store';
 
 function TenantApp() {
@@ -36,6 +36,7 @@ function TenantApp() {
 
 function TenantRoutes() {
   const { currentUser } = useAuth();
+  const { getTenantPath } = useCurrentTenant();
   
   if (!currentUser) {
     return (
@@ -58,7 +59,7 @@ function TenantRoutes() {
         <Route path="finance" element={<Finance />} />
         <Route path="settings" element={<Settings />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={getTenantPath('/')} replace />} />
     </Routes>
   );
 }
@@ -77,6 +78,7 @@ function SuperAdminRoutes() {
   return (
     <Routes>
       <Route path="/" element={<SuperAdminDashboard />} />
+      <Route path="*" element={<Navigate to="/superadmin" replace />} />
     </Routes>
   );
 }

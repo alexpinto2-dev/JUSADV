@@ -2,12 +2,14 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useAuth } from '../store';
+import { useCurrentTenant } from '../contexts/TenantContext';
 
 export function Layout() {
   const { currentUser } = useAuth();
+  const { getTenantPath } = useCurrentTenant();
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={getTenantPath('/login')} replace />;
   }
 
   return (
