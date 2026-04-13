@@ -63,6 +63,16 @@ export function WorkspaceSelector() {
               Continuar
             </button>
           </div>
+
+          <div className="text-center mt-6">
+            <button
+              type="button"
+              onClick={() => navigate('/superadmin')}
+              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              Acesso Administrativo
+            </button>
+          </div>
         </form>
       </div>
     </div>
