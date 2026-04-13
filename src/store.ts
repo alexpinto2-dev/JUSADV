@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Client, Payment, User, Template, CustomVar, Process, Event, Tenant } from './types';
 import { useCurrentTenant } from './contexts/TenantContext';
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, query, where, getDocFromServer } from 'firebase/firestore';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from './firebase';
+import { handleFirestoreError, OperationType } from './lib/firestoreError';
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
   const [state, setState] = useState<T>(() => {
@@ -16,32 +20,42 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 }
 
 export function useTenants() {
-  const [tenants, setTenants] = useLocalStorage<Tenant[]>('rl_tenants', [
-    {
-      id: 'default-tenant-1',
-      name: 'Rubens Lima Advocacia',
-      slug: 'rubenslima',
-      primaryColor: '#ca8a04',
-      createdAt: new Date().toISOString()
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+
+  useEffect(() => {
+    const q = collection(db, 'tenants');
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tenant));
+      setTenants(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'tenants'));
+    return () => unsubscribe();
+  }, []);
+
+  const addTenant = async (tenant: Omit<Tenant, 'id' | 'createdAt'>) => {
+    const id = crypto.randomUUID();
+    const newTenant = { ...tenant, id, createdAt: new Date().toISOString() };
+    try {
+      await setDoc(doc(db, 'tenants', id), newTenant);
+      return newTenant;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'tenants');
     }
-  ]);
-
-  const addTenant = (tenant: Omit<Tenant, 'id' | 'createdAt'>) => {
-    const newTenant: Tenant = {
-      ...tenant,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setTenants((prev) => [...prev, newTenant]);
-    return newTenant;
   };
 
-  const updateTenant = (id: string, updates: Partial<Tenant>) => {
-    setTenants((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  const updateTenant = async (id: string, updates: Partial<Tenant>) => {
+    try {
+      await updateDoc(doc(db, 'tenants', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'tenants');
+    }
   };
 
-  const deleteTenant = (id: string) => {
-    setTenants((prev) => prev.filter((t) => t.id !== id));
+  const deleteTenant = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'tenants', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'tenants');
+    }
   };
 
   return { tenants, addTenant, updateTenant, deleteTenant };
@@ -50,28 +64,44 @@ export function useTenants() {
 export function useClients() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allClients, setAllClients] = useLocalStorage<Client[]>('rl_clients', []);
+  const [clients, setClients] = useState<Client[]>([]);
 
-  const clients = allClients.filter(c => c.tenantId === tenantId || (!c.tenantId && tenantId === 'default-tenant-1'));
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'clients'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+      setClients(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'clients'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'tenantId'>) => {
+  const addClient = async (client: Omit<Client, 'id' | 'createdAt' | 'tenantId'>) => {
     if (!tenantId) return null;
-    const newClient: Client = {
-      ...client,
-      id: crypto.randomUUID(),
-      tenantId,
-      createdAt: new Date().toISOString(),
-    };
-    setAllClients((prev) => [...prev, newClient]);
-    return newClient;
+    const id = crypto.randomUUID();
+    const newClient = { ...client, id, tenantId, createdAt: new Date().toISOString() };
+    try {
+      await setDoc(doc(db, 'clients', id), newClient);
+      return newClient;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'clients');
+    }
   };
 
-  const updateClient = (id: string, updates: Partial<Client>) => {
-    setAllClients((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+  const updateClient = async (id: string, updates: Partial<Client>) => {
+    try {
+      await updateDoc(doc(db, 'clients', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'clients');
+    }
   };
 
-  const deleteClient = (id: string) => {
-    setAllClients((prev) => prev.filter((c) => c.id !== id));
+  const deleteClient = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'clients', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'clients');
+    }
   };
 
   const getClient = (id: string) => clients.find((c) => c.id === id);
@@ -82,28 +112,44 @@ export function useClients() {
 export function usePayments() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allPayments, setAllPayments] = useLocalStorage<Payment[]>('rl_payments', []);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
-  const payments = allPayments.filter(p => p.tenantId === tenantId || (!p.tenantId && tenantId === 'default-tenant-1'));
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'payments'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment));
+      setPayments(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'payments'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const addPayment = (payment: Omit<Payment, 'id' | 'createdAt' | 'tenantId'>) => {
+  const addPayment = async (payment: Omit<Payment, 'id' | 'createdAt' | 'tenantId'>) => {
     if (!tenantId) return null;
-    const newPayment: Payment = {
-      ...payment,
-      id: crypto.randomUUID(),
-      tenantId,
-      createdAt: new Date().toISOString(),
-    };
-    setAllPayments((prev) => [...prev, newPayment]);
-    return newPayment;
+    const id = crypto.randomUUID();
+    const newPayment = { ...payment, id, tenantId, createdAt: new Date().toISOString() };
+    try {
+      await setDoc(doc(db, 'payments', id), newPayment);
+      return newPayment;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'payments');
+    }
   };
 
-  const updatePayment = (id: string, updates: Partial<Payment>) => {
-    setAllPayments((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  const updatePayment = async (id: string, updates: Partial<Payment>) => {
+    try {
+      await updateDoc(doc(db, 'payments', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'payments');
+    }
   };
 
-  const deletePayment = (id: string) => {
-    setAllPayments((prev) => prev.filter((p) => p.id !== id));
+  const deletePayment = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'payments', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'payments');
+    }
   };
 
   return { payments, addPayment, updatePayment, deletePayment };
@@ -112,28 +158,44 @@ export function usePayments() {
 export function useProcesses() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allProcesses, setAllProcesses] = useLocalStorage<Process[]>('rl_processes', []);
+  const [processes, setProcesses] = useState<Process[]>([]);
 
-  const processes = allProcesses.filter(p => p.tenantId === tenantId || (!p.tenantId && tenantId === 'default-tenant-1'));
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'processes'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Process));
+      setProcesses(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'processes'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const addProcess = (process: Omit<Process, 'id' | 'createdAt' | 'tenantId'>) => {
+  const addProcess = async (process: Omit<Process, 'id' | 'createdAt' | 'tenantId'>) => {
     if (!tenantId) return null;
-    const newProcess: Process = {
-      ...process,
-      id: crypto.randomUUID(),
-      tenantId,
-      createdAt: new Date().toISOString(),
-    };
-    setAllProcesses((prev) => [...prev, newProcess]);
-    return newProcess;
+    const id = crypto.randomUUID();
+    const newProcess = { ...process, id, tenantId, createdAt: new Date().toISOString() };
+    try {
+      await setDoc(doc(db, 'processes', id), newProcess);
+      return newProcess;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'processes');
+    }
   };
 
-  const updateProcess = (id: string, updates: Partial<Process>) => {
-    setAllProcesses((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  const updateProcess = async (id: string, updates: Partial<Process>) => {
+    try {
+      await updateDoc(doc(db, 'processes', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'processes');
+    }
   };
 
-  const deleteProcess = (id: string) => {
-    setAllProcesses((prev) => prev.filter((p) => p.id !== id));
+  const deleteProcess = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'processes', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'processes');
+    }
   };
 
   return { processes, addProcess, updateProcess, deleteProcess };
@@ -142,28 +204,44 @@ export function useProcesses() {
 export function useEvents() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allEvents, setAllEvents] = useLocalStorage<Event[]>('rl_events', []);
+  const [events, setEvents] = useState<Event[]>([]);
 
-  const events = allEvents.filter(e => e.tenantId === tenantId || (!e.tenantId && tenantId === 'default-tenant-1'));
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'events'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
+      setEvents(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'events'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const addEvent = (event: Omit<Event, 'id' | 'createdAt' | 'tenantId'>) => {
+  const addEvent = async (event: Omit<Event, 'id' | 'createdAt' | 'tenantId'>) => {
     if (!tenantId) return null;
-    const newEvent: Event = {
-      ...event,
-      id: crypto.randomUUID(),
-      tenantId,
-      createdAt: new Date().toISOString(),
-    };
-    setAllEvents((prev) => [...prev, newEvent]);
-    return newEvent;
+    const id = crypto.randomUUID();
+    const newEvent = { ...event, id, tenantId, createdAt: new Date().toISOString() };
+    try {
+      await setDoc(doc(db, 'events', id), newEvent);
+      return newEvent;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'events');
+    }
   };
 
-  const updateEvent = (id: string, updates: Partial<Event>) => {
-    setAllEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+  const updateEvent = async (id: string, updates: Partial<Event>) => {
+    try {
+      await updateDoc(doc(db, 'events', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'events');
+    }
   };
 
-  const deleteEvent = (id: string) => {
-    setAllEvents((prev) => prev.filter((e) => e.id !== id));
+  const deleteEvent = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'events', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'events');
+    }
   };
 
   return { events, addEvent, updateEvent, deleteEvent };
@@ -172,25 +250,48 @@ export function useEvents() {
 export function useUsers() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allUsers, setAllUsers] = useLocalStorage<User[]>('rl_users', [
-    { id: '1', tenantId: 'default-tenant-1', name: 'Rubens Lima', email: 'admin@rubenslima.com', password: '123456', role: 'admin' },
-    { id: 'super-1', name: 'Alex Pinto', email: 'alexpinto2@gmail.com', password: 'admin', role: 'superadmin' }
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
-  const users = allUsers.filter(u => u.tenantId === tenantId || (!u.tenantId && tenantId === 'default-tenant-1') || u.role === 'superadmin');
+  useEffect(() => {
+    const q = collection(db, 'users');
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setAllUsers(data);
+      if (tenantId) {
+        setUsers(data.filter(u => u.tenantId === tenantId || u.role === 'superadmin'));
+      } else {
+        setUsers(data);
+      }
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'users'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const addUser = (user: Omit<User, 'id' | 'tenantId'>) => {
+  const addUser = async (user: Omit<User, 'id' | 'tenantId'>) => {
     if (!tenantId) return;
-    const newUser: User = { ...user, id: crypto.randomUUID(), tenantId };
-    setAllUsers((prev) => [...prev, newUser]);
+    const id = crypto.randomUUID();
+    const newUser = { ...user, id, tenantId };
+    try {
+      await setDoc(doc(db, 'users', id), newUser);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'users');
+    }
   };
 
-  const updateUser = (id: string, updates: Partial<User>) => {
-    setAllUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
+  const updateUser = async (id: string, updates: Partial<User>) => {
+    try {
+      await updateDoc(doc(db, 'users', id), updates);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'users');
+    }
   };
 
-  const deleteUser = (id: string) => {
-    setAllUsers((prev) => prev.filter((u) => u.id !== id));
+  const deleteUser = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'users');
+    }
   };
 
   return { users, allUsers, addUser, updateUser, deleteUser };
@@ -199,130 +300,148 @@ export function useUsers() {
 export function useCustomVars() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allCustomVars, setAllCustomVars] = useLocalStorage<CustomVar[]>('rl_custom_vars', [
-    { id: '1', tenantId: 'default-tenant-1', key: 'NOME_ADVOGADO', value: 'Rubens Lima' },
-    { id: '2', tenantId: 'default-tenant-1', key: 'OAB', value: '12345/SP' },
-    { id: '3', tenantId: 'default-tenant-1', key: 'ENDERECO_ESCRITORIO', value: 'Rua Exemplo, 123, Centro, São Paulo - SP' }
-  ]);
+  const [customVars, setCustomVars] = useState<CustomVar[]>([]);
 
-  const customVars = allCustomVars.filter(v => v.tenantId === tenantId || (!v.tenantId && tenantId === 'default-tenant-1'));
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'customVars'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CustomVar));
+      setCustomVars(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'customVars'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const addCustomVar = (key: string, value: string) => {
+  const addCustomVar = async (key: string, value: string) => {
     if (!tenantId) return;
     const formattedKey = key.toUpperCase().replace(/[^A-Z0-9_]/g, '');
-    setAllCustomVars((prev) => [...prev, { id: crypto.randomUUID(), tenantId, key: formattedKey, value }]);
+    const id = crypto.randomUUID();
+    try {
+      await setDoc(doc(db, 'customVars', id), { id, tenantId, key: formattedKey, value });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'customVars');
+    }
   };
 
-  const updateCustomVar = (id: string, key: string, value: string) => {
+  const updateCustomVar = async (id: string, key: string, value: string) => {
     const formattedKey = key.toUpperCase().replace(/[^A-Z0-9_]/g, '');
-    setAllCustomVars((prev) => prev.map((v) => (v.id === id ? { ...v, key: formattedKey, value } : v)));
+    try {
+      await updateDoc(doc(db, 'customVars', id), { key: formattedKey, value });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'customVars');
+    }
   };
 
-  const deleteCustomVar = (id: string) => {
-    setAllCustomVars((prev) => prev.filter((v) => v.id !== id));
+  const deleteCustomVar = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'customVars', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'customVars');
+    }
   };
 
   return { customVars, addCustomVar, updateCustomVar, deleteCustomVar };
 }
 
-const defaultTemplates: Template[] = [
-  {
-    id: 'procuracao',
-    tenantId: 'default-tenant-1',
-    type: 'procuracao',
-    title: 'Procuração Ad Judicia et Extra',
-    content: `<h1 style="text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 30px; text-transform: uppercase;">Procuração Ad Judicia et Extra</h1>
-<p style="text-align: justify; margin-bottom: 15px;"><strong>OUTORGANTE:</strong> [NOME_CLIENTE], [NACIONALIDADE], [ESTADO_CIVIL], [PROFISSAO], portador(a) da Cédula de Identidade RG nº [RG], inscrito(a) no CPF sob o nº [CPF], residente e domiciliado(a) na [ENDERECO], [CIDADE] - [ESTADO], CEP: [CEP].</p>
-<p style="text-align: justify; margin-bottom: 15px;"><strong>OUTORGADO(S):</strong> [NOME_ADVOGADO], brasileiro(a), advogado(a), inscrito(a) na OAB sob o nº [OAB], com escritório profissional situado na [ENDERECO_ESCRITORIO].</p>
-<p style="text-align: justify; margin-bottom: 15px;"><strong>PODERES:</strong> Pelo presente instrumento particular de procuração, o(a) outorgante nomeia e constitui o(a) outorgado(a) seu(sua) bastante procurador(a), conferindo-lhe os poderes da cláusula <em>ad judicia et extra</em>, para o foro em geral, podendo, portanto, promover quaisquer medidas judiciais ou administrativas, em qualquer instância, assinar termo, oferecer defesa, direta ou indireta, interpor recursos, ajuizar ações, bem como os poderes especiais para receber citação, confessar, reconhecer a procedência do pedido, transigir, desistir, renunciar ao direito sobre que se funda a ação, receber, dar quitação, firmar compromisso e assinar declaração de hipossuficiência econômica, agindo em conjunto ou separadamente, podendo ainda substabelecer esta com ou sem reserva de iguais poderes, dando tudo por bom, firme e valioso.</p>
-<p style="text-align: right; margin-top: 40px; margin-bottom: 60px;">[CIDADE] - [ESTADO], [DATA_ATUAL].</p>
-<div style="text-align: center; margin-top: 80px;">
-  <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 10px auto;"></div>
-  <p style="font-weight: bold;">[NOME_CLIENTE]</p>
-  <p style="font-size: 14px;">Outorgante</p>
-</div>`
-  },
-  {
-    id: 'hipossuficiencia',
-    tenantId: 'default-tenant-1',
-    type: 'hipossuficiencia',
-    title: 'Declaração de Hipossuficiência',
-    content: `<h1 style="text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 30px; text-transform: uppercase;">Declaração de Hipossuficiência</h1>
-<p style="text-align: justify; margin-bottom: 30px;">Eu, <strong>[NOME_CLIENTE]</strong>, [NACIONALIDADE], [ESTADO_CIVIL], [PROFISSAO], portador(a) da Cédula de Identidade RG nº [RG], inscrito(a) no CPF sob o nº [CPF], residente e domiciliado(a) na [ENDERECO], [CIDADE] - [ESTADO], CEP: [CEP], <strong>DECLARO</strong>, para todos os fins de direito e sob as penas da lei, que não tenho condições de arcar com as despesas inerentes ao presente processo, sem prejuízo do meu sustento e de minha família, necessitando, portanto, da Gratuidade da Justiça, nos termos do art. 98 e seguintes da Lei 13.105/2015 (Código de Processo Civil) e do art. 5º, LXXIV, da Constituição Federal.</p>
-<p style="text-align: justify; margin-bottom: 40px;">Por ser expressão da verdade, firmo a presente declaração.</p>
-<p style="text-align: right; margin-bottom: 60px;">[CIDADE] - [ESTADO], [DATA_ATUAL].</p>
-<div style="text-align: center; margin-top: 80px;">
-  <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto 10px auto;"></div>
-  <p style="font-weight: bold;">[NOME_CLIENTE]</p>
-  <p style="font-size: 14px;">Declarante</p>
-</div>`
-  },
-  {
-    id: 'contrato',
-    tenantId: 'default-tenant-1',
-    type: 'contrato',
-    title: 'Contrato de Prestação de Serviços',
-    content: `<h1 style="text-align: center; font-weight: bold; font-size: 20px; margin-bottom: 30px; text-transform: uppercase;">Contrato de Prestação de Serviços Advocatícios</h1>
-<p style="text-align: justify; margin-bottom: 15px;"><strong>CONTRATANTE:</strong> [NOME_CLIENTE], [NACIONALIDADE], [ESTADO_CIVIL], [PROFISSAO], portador(a) da Cédula de Identidade RG nº [RG], inscrito(a) no CPF sob o nº [CPF], residente e domiciliado(a) na [ENDERECO], [CIDADE] - [ESTADO], CEP: [CEP].</p>
-<p style="text-align: justify; margin-bottom: 15px;"><strong>CONTRATADO:</strong> [NOME_ADVOGADO], inscrito(a) na OAB sob o nº [OAB], com escritório profissional situado na [ENDERECO_ESCRITORIO].</p>
-<p style="text-align: justify; margin-bottom: 15px;">As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação de Serviços Advocatícios, que se regerá pelas cláusulas seguintes e pelas condições descritas no presente.</p>
-<h2 style="font-weight: bold; margin-top: 24px; margin-bottom: 8px;">CLÁUSULA 1ª - DO OBJETO DO CONTRATO</h2>
-<p style="text-align: justify; margin-bottom: 15px;">O presente instrumento tem como objeto a prestação de serviços advocatícios a serem realizados pelo CONTRATADO em favor do CONTRATANTE, referente à ação de [TIPO_DE_ACAO].</p>
-<h2 style="font-weight: bold; margin-top: 24px; margin-bottom: 8px;">CLÁUSULA 2ª - DOS HONORÁRIOS</h2>
-<p style="text-align: justify; margin-bottom: 15px;">Em remuneração aos serviços profissionais ora contratados, o CONTRATANTE pagará ao CONTRATADO a importância de R$ [VALOR_HONORARIOS], a serem pagos da seguinte forma: [FORMA_PAGAMENTO].</p>
-<p style="text-align: right; margin-top: 40px; margin-bottom: 60px;">[CIDADE] - [ESTADO], [DATA_ATUAL].</p>
-<div style="display: flex; justify-content: space-between; margin-top: 80px; text-align: center;">
-  <div style="width: 45%;">
-    <div style="border-top: 1px solid #000; width: 100%; margin-bottom: 10px;"></div>
-    <p style="font-weight: bold;">[NOME_CLIENTE]</p>
-    <p style="font-size: 14px;">Contratante</p>
-  </div>
-  <div style="width: 45%;">
-    <div style="border-top: 1px solid #000; width: 100%; margin-bottom: 10px;"></div>
-    <p style="font-weight: bold;">[NOME_ADVOGADO]</p>
-    <p style="font-size: 14px;">Contratado</p>
-  </div>
-</div>`
-  }
-];
-
 export function useTemplates() {
   const { currentTenant } = useCurrentTenant();
   const tenantId = currentTenant?.id;
-  const [allTemplates, setAllTemplates] = useLocalStorage<Template[]>('rl_templates', defaultTemplates);
+  const [templates, setTemplates] = useState<Template[]>([]);
 
-  const templates = allTemplates.filter(t => t.tenantId === tenantId || (!t.tenantId && tenantId === 'default-tenant-1'));
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'templates'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Template));
+      setTemplates(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'templates'));
+    return () => unsubscribe();
+  }, [tenantId]);
 
-  const updateTemplate = (id: string, content: string) => {
-    setAllTemplates(prev => prev.map(t => t.id === id ? { ...t, content } : t));
+  const updateTemplate = async (id: string, content: string) => {
+    try {
+      await updateDoc(doc(db, 'templates', id), { content });
+    } catch (error) {
+      // If it doesn't exist, we might need to create it
+      if (tenantId) {
+        try {
+          await setDoc(doc(db, 'templates', id), { id, tenantId, type: id, title: id, content });
+        } catch (e) {
+          handleFirestoreError(e, OperationType.CREATE, 'templates');
+        }
+      }
+    }
   };
 
   return { templates, updateTemplate };
 }
 
 export function useAuth() {
-  const [currentUser, setCurrentUser] = useLocalStorage<User | null>('rl_auth', null);
-  const { allUsers } = useUsers();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
 
-  const login = (email: string, pass: string, tenantId?: string) => {
-    if (email === 'alexpinto2@gmail.com' && pass === 'admin') {
-      setCurrentUser({ id: 'super-1', name: 'Alex Pinto', email: 'alexpinto2@gmail.com', password: 'admin', role: 'superadmin' });
-      return true;
-    }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const isSuperAdmin = firebaseUser.email === 'alexpinto2@gmail.com';
+        
+        try {
+          // Try to fetch the user from Firestore
+          const userDoc = await getDocFromServer(doc(db, 'users', firebaseUser.uid));
+          
+          if (userDoc.exists()) {
+            setCurrentUser({ id: userDoc.id, ...userDoc.data() } as User);
+          } else {
+            // Create the user if it doesn't exist
+            const newUser: User = {
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || firebaseUser.email || 'Usuário',
+              email: firebaseUser.email || '',
+              role: isSuperAdmin ? 'superadmin' : 'admin',
+              tenantId: isSuperAdmin ? undefined : tenantId,
+            };
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+            setCurrentUser(newUser);
+          }
+        } catch (error) {
+          console.error("Error fetching user", error);
+          // Fallback
+          setCurrentUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || firebaseUser.email || 'Usuário',
+            email: firebaseUser.email || '',
+            role: isSuperAdmin ? 'superadmin' : 'admin',
+            tenantId: isSuperAdmin ? undefined : tenantId,
+          });
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [tenantId]);
 
-    const user = allUsers.find((u) => 
-      u.email === email && 
-      u.password === pass && 
-      (u.role === 'superadmin' || u.tenantId === tenantId || (!u.tenantId && tenantId === 'default-tenant-1'))
-    );
-    if (user) {
-      setCurrentUser(user);
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
       return true;
+    } catch (error) {
+      console.error("Login failed", error);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
 
-  return { currentUser, login, logout };
+  return { currentUser, loginWithGoogle, logout, loading };
 }

@@ -1,0 +1,159 @@
+{
+  "entities": {
+    "Tenant": {
+      "title": "Tenant",
+      "description": "Represents an office or business unit.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "customDomain": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "slug", "createdAt"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "A client belonging to a tenant.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "cpf": { "type": "string" },
+        "rg": { "type": "string" },
+        "nationality": { "type": "string" },
+        "maritalStatus": { "type": "string" },
+        "profession": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "zipCode": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "fullName", "createdAt"]
+    },
+    "Process": {
+      "title": "Process",
+      "description": "A legal process belonging to a tenant.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "processNumber": { "type": "string" },
+        "area": { "type": "string" },
+        "actionType": { "type": "string" },
+        "status": { "type": "string" },
+        "deadline": { "type": "string" },
+        "value": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "clientId", "createdAt"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A calendar event for a tenant.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "type": { "type": "string" },
+        "clientId": { "type": "string" },
+        "processNumber": { "type": "string" },
+        "date": { "type": "string" },
+        "actionType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "googleEventId": { "type": "string" }
+      },
+      "required": ["tenantId", "createdAt"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "A payment record for a tenant.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "installments": { "type": "number" },
+        "dueDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenantId", "clientId", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the system.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "Template": {
+      "title": "Template",
+      "description": "A document template for a tenant.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "required": ["tenantId", "type"]
+    },
+    "CustomVar": {
+      "title": "CustomVar",
+      "description": "A custom variable for a tenant.",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "key": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["tenantId", "key"]
+    }
+  },
+  "firestore": {
+    "/tenants/{tenantId}": {
+      "schema": { "$ref": "Tenant" },
+      "description": "Offices/Tenants"
+    },
+    "/clients/{clientId}": {
+      "schema": { "$ref": "Client" },
+      "description": "Clients"
+    },
+    "/processes/{processId}": {
+      "schema": { "$ref": "Process" },
+      "description": "Processes"
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "Event" },
+      "description": "Events"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "Payment" },
+      "description": "Payments"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "Users"
+    },
+    "/templates/{templateId}": {
+      "schema": { "$ref": "Template" },
+      "description": "Templates"
+    },
+    "/customVars/{customVarId}": {
+      "schema": { "$ref": "CustomVar" },
+      "description": "Custom Variables"
+    }
+  }
+}

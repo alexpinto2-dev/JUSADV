@@ -35,9 +35,13 @@ function TenantApp() {
 }
 
 function TenantRoutes() {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   const { getTenantPath } = useCurrentTenant();
   
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-zinc-950 text-yellow-500">Carregando...</div>;
+  }
+
   if (!currentUser) {
     return (
       <Routes>
@@ -65,8 +69,12 @@ function TenantRoutes() {
 }
 
 function SuperAdminRoutes() {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-zinc-950 text-yellow-500">Carregando...</div>;
+  }
+
   if (!currentUser || currentUser.role !== 'superadmin') {
     return (
       <Routes>
