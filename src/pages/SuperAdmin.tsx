@@ -80,6 +80,7 @@ export function SuperAdminDashboard() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTenantId, setEditingTenantId] = useState<string | null>(null);
   const [newTenant, setNewTenant] = useState({ name: '', slug: '', customDomain: '', primaryColor: '#ca8a04' });
   const [adminData, setAdminData] = useState({ name: '', email: '', password: '' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,10 +90,27 @@ export function SuperAdminDashboard() {
     navigate('/');
   };
 
+  const handleEditClick = (tenant: any) => {
+    setEditingTenantId(tenant.id);
+    setNewTenant({
+      name: tenant.name,
+      slug: tenant.slug,
+      customDomain: tenant.customDomain || '',
+      primaryColor: tenant.primaryColor || '#ca8a04'
+    });
+    setAdminData({ name: '', email: '', password: '' });
+    setIsModalOpen(true);
+  };
+
   const handleAddTenant = async (e: React.FormEvent) => {
     e.preventDefault();
-    await addTenant(newTenant, adminData);
+    if (editingTenantId) {
+      await updateTenant(editingTenantId, newTenant);
+    } else {
+      await addTenant(newTenant, adminData);
+    }
     setIsModalOpen(false);
+    setEditingTenantId(null);
     setNewTenant({ name: '', slug: '', customDomain: '', primaryColor: '#ca8a04' });
     setAdminData({ name: '', email: '', password: '' });
   };
@@ -291,6 +309,7 @@ export function SuperAdminDashboard() {
                   
                   <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
                     <button 
+                      onClick={() => handleEditClick(tenant)}
                       className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                     >
                       <Edit2 size={16} />
@@ -326,7 +345,7 @@ export function SuperAdminDashboard() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Novo Tenant</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-4">{editingTenantId ? 'Editar Tenant' : 'Novo Tenant'}</h2>
             <form onSubmit={handleAddTenant} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700">Nome do Escritório</label>
@@ -367,46 +386,51 @@ export function SuperAdminDashboard() {
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-200 mt-4">
-                <h3 className="text-sm font-bold text-slate-900 mb-3">Administrador do Escritório</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700">Nome do Admin</label>
-                    <input
-                      type="text"
-                      required
-                      value={adminData.name}
-                      onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700">Email (Login)</label>
-                    <input
-                      type="email"
-                      required
-                      value={adminData.email}
-                      onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700">Senha</label>
-                    <input
-                      type="password"
-                      required
-                      value={adminData.password}
-                      onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                    />
+              {!editingTenantId && (
+                <div className="pt-4 border-t border-slate-200 mt-4">
+                  <h3 className="text-sm font-bold text-slate-900 mb-3">Administrador do Escritório</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Nome do Admin</label>
+                      <input
+                        type="text"
+                        required
+                        value={adminData.name}
+                        onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Email (Login)</label>
+                      <input
+                        type="email"
+                        required
+                        value={adminData.email}
+                        onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700">Senha</label>
+                      <input
+                        type="password"
+                        required
+                        value={adminData.password}
+                        onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                        className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingTenantId(null);
+                  }}
                   className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50"
                 >
                   Cancelar
