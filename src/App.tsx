@@ -22,7 +22,12 @@ import { useTenants, useAuth } from './store';
 
 function TenantApp() {
   const { tenantSlug } = useParams();
-  const { tenants } = useTenants();
+  const { tenants, loading } = useTenants();
+
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-zinc-950 text-yellow-500">Carregando...</div>;
+  }
+
   const tenant = tenants.find(t => t.slug === tenantSlug);
 
   if (!tenant) return <Navigate to="/" />;
@@ -92,9 +97,13 @@ function SuperAdminRoutes() {
 }
 
 export default function App() {
-  const { tenants } = useTenants();
+  const { tenants, loading } = useTenants();
   const hostname = window.location.hostname;
   
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center bg-zinc-950 text-yellow-500">Carregando...</div>;
+  }
+
   // Check if we are on a custom domain (not localhost, not run.app, etc.)
   // For this demo, we'll assume any domain that matches a tenant's customDomain is a custom domain.
   const tenantByDomain = tenants.find(t => t.customDomain && t.customDomain === hostname);

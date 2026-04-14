@@ -23,13 +23,18 @@ import { createAuthUser } from './lib/auth';
 
 export function useTenants() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const q = collection(db, 'tenants');
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tenant));
       setTenants(data);
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'tenants'));
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'tenants');
+      setLoading(false);
+    });
     return () => unsubscribe();
   }, []);
 
@@ -78,7 +83,7 @@ export function useTenants() {
     }
   };
 
-  return { tenants, addTenant, updateTenant, deleteTenant };
+  return { tenants, loading, addTenant, updateTenant, deleteTenant };
 }
 
 export function useClients() {
@@ -418,26 +423,31 @@ export function useAuth() {
             setCurrentUser({ id: userDoc.id, ...userDoc.data() } as User);
           } else {
             // Create the user if it doesn't exist
-            const newUser: User = {
+            const newUser: any = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || firebaseUser.email || 'Usuário',
               email: firebaseUser.email || '',
               role: isSuperAdmin ? 'superadmin' : 'admin',
-              tenantId: isSuperAdmin ? undefined : tenantId,
             };
+            if (!isSuperAdmin && tenantId) {
+              newUser.tenantId = tenantId;
+            }
             await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            setCurrentUser(newUser);
+            setCurrentUser(newUser as User);
           }
         } catch (error) {
           console.error("Error fetching user", error);
           // Fallback
-          setCurrentUser({
+          const fallbackUser: any = {
             id: firebaseUser.uid,
             name: firebaseUser.displayName || firebaseUser.email || 'Usuário',
             email: firebaseUser.email || '',
             role: isSuperAdmin ? 'superadmin' : 'admin',
-            tenantId: isSuperAdmin ? undefined : tenantId,
-          });
+          };
+          if (!isSuperAdmin && tenantId) {
+            fallbackUser.tenantId = tenantId;
+          }
+          setCurrentUser(fallbackUser as User);
         }
       } else {
         setCurrentUser(null);
