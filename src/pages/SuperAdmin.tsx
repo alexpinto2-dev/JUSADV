@@ -81,6 +81,7 @@ export function SuperAdminDashboard() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTenant, setNewTenant] = useState({ name: '', slug: '', customDomain: '', primaryColor: '#ca8a04' });
+  const [adminData, setAdminData] = useState({ name: '', email: '', password: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
   const handleLogout = () => {
@@ -88,11 +89,12 @@ export function SuperAdminDashboard() {
     navigate('/');
   };
 
-  const handleAddTenant = (e: React.FormEvent) => {
+  const handleAddTenant = async (e: React.FormEvent) => {
     e.preventDefault();
-    addTenant(newTenant);
+    await addTenant(newTenant, adminData);
     setIsModalOpen(false);
     setNewTenant({ name: '', slug: '', customDomain: '', primaryColor: '#ca8a04' });
+    setAdminData({ name: '', email: '', password: '' });
   };
 
   const filteredTenants = tenants.filter(t => 
@@ -364,6 +366,43 @@ export function SuperAdminDashboard() {
                   className="mt-1 block h-10 w-full rounded-md border-0 py-1.5 px-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
                 />
               </div>
+
+              <div className="pt-4 border-t border-slate-200 mt-4">
+                <h3 className="text-sm font-bold text-slate-900 mb-3">Administrador do Escritório</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Nome do Admin</label>
+                    <input
+                      type="text"
+                      required
+                      value={adminData.name}
+                      onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Email (Login)</label>
+                    <input
+                      type="email"
+                      required
+                      value={adminData.email}
+                      onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700">Senha</label>
+                    <input
+                      type="password"
+                      required
+                      value={adminData.password}
+                      onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                      className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"

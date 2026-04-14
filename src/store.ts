@@ -19,6 +19,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   return [state, setState] as const;
 }
 
+import { createAuthUser } from './lib/auth';
+
 export function useTenants() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
 
@@ -31,11 +33,29 @@ export function useTenants() {
     return () => unsubscribe();
   }, []);
 
-  const addTenant = async (tenant: Omit<Tenant, 'id' | 'createdAt'>) => {
+  const addTenant = async (tenant: Omit<Tenant, 'id' | 'createdAt'>, adminData?: { name: string, email: string, password: string }) => {
     const id = crypto.randomUUID();
     const newTenant = { ...tenant, id, createdAt: new Date().toISOString() };
     try {
       await setDoc(doc(db, 'tenants', id), newTenant);
+      
+      if (adminData) {
+        try {
+          const uid = await createAuthUser(adminData.email, adminData.password);
+          const newUser: User = {
+            id: uid,
+            name: adminData.name,
+            email: adminData.email,
+            role: 'admin',
+            tenantId: id
+          };
+          await setDoc(doc(db, 'users', uid), newUser);
+        } catch (authError) {
+          console.error("Erro ao criar usuário admin:", authError);
+          alert("O escritório foi criado, mas houve um erro ao criar o usuário administrador. " + (authError instanceof Error ? authError.message : String(authError)));
+        }
+      }
+      
       return newTenant;
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'tenants');
@@ -269,11 +289,14 @@ export function useUsers() {
 
   const addUser = async (user: Omit<User, 'id' | 'tenantId'>) => {
     if (!tenantId) return;
-    const id = crypto.randomUUID();
-    const newUser = { ...user, id, tenantId };
     try {
-      await setDoc(doc(db, 'users', id), newUser);
+      // Create auth user first
+      const uid = await createAuthUser(user.email, user.password || 'senha123');
+      const newUser = { ...user, id: uid, tenantId };
+      await setDoc(doc(db, 'users', uid), newUser);
     } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      alert("Erro ao criar usuário: " + (error instanceof Error ? error.message : String(error)));
       handleFirestoreError(error, OperationType.CREATE, 'users');
     }
   };
