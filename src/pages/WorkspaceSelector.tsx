@@ -13,7 +13,7 @@ export function WorkspaceSelector() {
     const tenant = tenants.find(t => t.slug === slug.toLowerCase());
     if (tenant) {
       navigate(`/${tenant.slug}`);
-    } else if (slug.toLowerCase() === 'superadmin') {
+    } else if (slug.toUpperCase() === 'JUSADV') {
       navigate('/superadmin');
     } else {
       setError('Workspace não encontrado.');
@@ -61,16 +61,6 @@ export function WorkspaceSelector() {
               className="group relative flex w-full justify-center rounded-md bg-yellow-600 px-3 py-3 text-sm font-semibold text-zinc-950 hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600 transition-colors"
             >
               Continuar
-            </button>
-          </div>
-
-          <div className="text-center mt-6">
-            <button
-              type="button"
-              onClick={() => navigate('/superadmin')}
-              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-            >
-              Acesso Administrativo
             </button>
           </div>
         </form>

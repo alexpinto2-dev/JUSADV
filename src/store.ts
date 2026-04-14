@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Client, Payment, User, Template, CustomVar, Process, Event, Tenant } from './types';
 import { useCurrentTenant } from './contexts/TenantContext';
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, query, where, getDocFromServer } from 'firebase/firestore';
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { handleFirestoreError, OperationType } from './lib/firestoreError';
 
@@ -424,10 +424,9 @@ export function useAuth() {
     return () => unsubscribe();
   }, [tenantId]);
 
-  const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
+  const login = async (email: string, pass: string) => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithEmailAndPassword(auth, email, pass);
       return true;
     } catch (error) {
       console.error("Login failed", error);
@@ -443,5 +442,5 @@ export function useAuth() {
     }
   };
 
-  return { currentUser, loginWithGoogle, logout, loading };
+  return { currentUser, login, logout, loading };
 }
