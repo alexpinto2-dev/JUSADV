@@ -13,7 +13,7 @@ service cloud.firestore {
     
     function isSuperAdmin() {
       return isAuthenticated() && (
-        (request.auth.token.email == "alexpinto2@gmail.com" && request.auth.token.email_verified == true) ||
+        request.auth.token.email == "alexpinto2@gmail.com" ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')
       );
@@ -42,7 +42,7 @@ service cloud.firestore {
     }
 
     match /tenants/{tenantId} {
-      allow read: if isAuthenticated(); // Needed for routing
+      allow read: if true; // Needed for routing before login
       allow create, update, delete: if isSuperAdmin();
     }
 
