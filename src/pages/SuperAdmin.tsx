@@ -216,7 +216,7 @@ export function SuperAdminDashboard() {
                 <p className="text-xs text-slate-500 capitalize">{today}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-bold text-lg border border-yellow-200">
-                {currentUser?.name?.charAt(0) || 'A'}
+                {(currentUser?.name || 'A').charAt(0).toUpperCase()}
               </div>
             </div>
           </div>

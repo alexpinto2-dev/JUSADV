@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { useUsers, useTemplates, useAuth, useCustomVars } from '../store';
+import { useUsers, useTemplates, useAuth, useCustomVars, useTenants } from '../store';
 import { useCurrentTenant } from '../contexts/TenantContext';
-import { Plus, Edit, Trash2, Upload, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, Save, Building } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 export function Settings() {
@@ -10,8 +10,16 @@ export function Settings() {
   const { users, addUser, updateUser, deleteUser } = useUsers();
   const { templates, updateTemplate } = useTemplates();
   const { customVars, addCustomVar, updateCustomVar, deleteCustomVar } = useCustomVars();
-  const [activeTab, setActiveTab] = useState<'users' | 'templates' | 'variables'>('users');
+  const { updateTenant } = useTenants();
+  const [activeTab, setActiveTab] = useState<'tenant' | 'users' | 'templates' | 'variables'>('tenant');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Tenant form state
+  const [tenantForm, setTenantForm] = useState({
+    name: currentTenant?.name || '',
+    logoUrl: currentTenant?.logoUrl || '',
+    primaryColor: currentTenant?.primaryColor || '#ca8a04'
+  });
 
   // User form state
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -104,18 +112,32 @@ export function Settings() {
     reader.readAsText(file);
   };
 
+  const handleTenantSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentTenant) {
+      await updateTenant(currentTenant.id, tenantForm);
+      alert('Configurações do escritório atualizadas com sucesso!');
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
         <p className="mt-2 text-sm text-slate-700">
-          Gerencie usuários, acessos, variáveis globais e modelos de documentos.
+          Gerencie o escritório, usuários, acessos, variáveis globais e modelos de documentos.
         </p>
       </div>
 
       <div className="mb-6">
         <div className="border-b border-slate-200">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('tenant')}
+              className={`${activeTab === 'tenant' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
+            >
+              Escritório
+            </button>
             <button
               onClick={() => setActiveTab('users')}
               className={`${activeTab === 'users' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'} whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium`}
@@ -137,6 +159,73 @@ export function Settings() {
           </nav>
         </div>
       </div>
+
+      {activeTab === 'tenant' && (
+        <div className="max-w-2xl">
+          <div className="mb-6">
+            <h2 className="text-lg font-medium text-slate-900">Dados do Escritório</h2>
+            <p className="text-sm text-slate-500">
+              Atualize as informações principais e a identidade visual do seu escritório.
+            </p>
+          </div>
+          
+          <form onSubmit={handleTenantSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Nome do Escritório</label>
+              <input
+                type="text"
+                required
+                value={tenantForm.name}
+                onChange={(e) => setTenantForm({ ...tenantForm, name: e.target.value })}
+                className="mt-1 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700">URL da Logo (Opcional)</label>
+              <div className="mt-1 flex items-center gap-4">
+                {tenantForm.logoUrl ? (
+                  <img src={tenantForm.logoUrl} alt="Logo preview" className="h-12 object-contain bg-slate-50 rounded border border-slate-200 p-1" />
+                ) : (
+                  <div className="h-12 w-12 flex items-center justify-center bg-slate-100 rounded border border-slate-200 text-slate-400">
+                    <Building size={24} />
+                  </div>
+                )}
+                <input
+                  type="url"
+                  value={tenantForm.logoUrl}
+                  onChange={(e) => setTenantForm({ ...tenantForm, logoUrl: e.target.value })}
+                  placeholder="https://exemplo.com/logo.png"
+                  className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-500">Insira o link direto para a imagem da sua logo (PNG, JPG ou SVG).</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Cor Principal</label>
+              <div className="mt-1 flex items-center gap-3">
+                <input
+                  type="color"
+                  value={tenantForm.primaryColor}
+                  onChange={(e) => setTenantForm({ ...tenantForm, primaryColor: e.target.value })}
+                  className="block h-10 w-20 rounded-md border-0 py-1 px-1 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6 cursor-pointer"
+                />
+                <span className="text-sm font-mono text-slate-500">{tenantForm.primaryColor}</span>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200 flex justify-end">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500"
+              >
+                <Save size={16} /> Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {activeTab === 'users' && (
         <div>

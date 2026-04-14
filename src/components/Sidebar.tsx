@@ -76,10 +76,10 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full flex items-center justify-center text-white font-medium" style={{ backgroundColor: currentTenant?.primaryColor || '#ca8a04' }}>
-              {currentUser?.name.charAt(0).toUpperCase()}
+              {(currentUser?.name || 'U').charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-zinc-900">{currentUser?.name}</span>
+              <span className="text-sm font-medium text-zinc-900">{currentUser?.name || 'Usuário'}</span>
               <span className="text-xs text-zinc-500 capitalize">{currentUser?.role}</span>
             </div>
           </div>
