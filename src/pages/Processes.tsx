@@ -81,8 +81,8 @@ export function Processes() {
   const filteredProcesses = processes.filter(process => {
     const client = clients.find(c => c.id === process.clientId);
     const matchesSearch = 
-      client?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      process.processNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      (client?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (process.processNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'Todos' || process.status === statusFilter;
     
     return matchesSearch && matchesStatus;

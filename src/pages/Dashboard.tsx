@@ -73,7 +73,7 @@ export function Dashboard() {
                 <li key={client.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50">
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold">
-                      {client.fullName.charAt(0)}
+                      {(client.fullName || 'C').charAt(0).toUpperCase()}
                     </div>
                     <div className="ml-4">
                       <div className="font-medium text-slate-900">{client.fullName}</div>

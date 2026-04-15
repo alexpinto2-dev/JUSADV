@@ -20,7 +20,7 @@ export function TenantProvider({ children, tenant }: { children: React.ReactNode
 
   useEffect(() => {
     setCurrentTenant(tenant);
-  }, [tenant]);
+  }, [tenant?.id, tenant?.name, tenant?.slug, tenant?.customDomain, tenant?.primaryColor, tenant?.logoUrl]);
 
   const getTenantPath = (path: string) => {
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;

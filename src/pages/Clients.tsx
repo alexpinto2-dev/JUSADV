@@ -10,8 +10,8 @@ export function Clients() {
   const [search, setSearch] = useState('');
 
   const filteredClients = clients.filter((c) =>
-    c.fullName.toLowerCase().includes(search.toLowerCase()) ||
-    c.cpf.includes(search)
+    (c.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.cpf || '').includes(search)
   );
 
   return (

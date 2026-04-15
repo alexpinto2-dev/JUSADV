@@ -30,12 +30,11 @@ export function ClientForm() {
   useEffect(() => {
     if (id && id !== 'new') {
       const client = clients.find(c => c.id === id);
-      if (client) {
+      if (client && client.fullName !== formData.fullName) {
         setFormData(client);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, clients, formData.fullName]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

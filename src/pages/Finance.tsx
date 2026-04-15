@@ -21,8 +21,8 @@ export function Finance() {
   const filteredPayments = payments.filter((p) => {
     const client = clients.find((c) => c.id === p.clientId);
     return (
-      client?.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase())
+      (client?.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.description || '').toLowerCase().includes(search.toLowerCase())
     );
   });
 

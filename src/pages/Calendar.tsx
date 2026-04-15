@@ -65,8 +65,8 @@ export function Calendar() {
   const filteredEvents = events.filter(event => {
     const client = clients.find(c => c.id === event.clientId);
     const matchesSearch = 
-      client?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.processNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      (client?.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (event.processNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'Todos' || event.type === typeFilter;
     
     return matchesSearch && matchesType;

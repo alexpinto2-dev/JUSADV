@@ -76,7 +76,7 @@ export function SuperAdminLogin() {
 }
 
 export function SuperAdminDashboard() {
-  const { tenants, addTenant, deleteTenant } = useTenants();
+  const { tenants, addTenant, updateTenant, deleteTenant } = useTenants();
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
