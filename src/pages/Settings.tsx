@@ -5,7 +5,7 @@ import { Plus, Edit, Trash2, Upload, Save, Building } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 export function Settings() {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
   const { currentTenant, getTenantPath } = useCurrentTenant();
   const { users, addUser, updateUser, deleteUser } = useUsers();
   const { templates, updateTemplate } = useTemplates();
@@ -34,6 +34,10 @@ export function Settings() {
   // Template form state
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(templates[0]?.id || '');
   const [templateContent, setTemplateContent] = useState<string>(templates[0]?.content || '');
+
+  if (loading) {
+    return <div className="flex h-full items-center justify-center text-zinc-500">Carregando configurações...</div>;
+  }
 
   if (currentUser?.role !== 'admin' && currentUser?.role !== 'superadmin') {
     return <Navigate to={getTenantPath('/')} replace />;
@@ -182,7 +186,7 @@ export function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700">URL da Logo (Opcional)</label>
+              <label className="block text-sm font-medium text-slate-700">Logo do Escritório (Opcional)</label>
               <div className="mt-1 flex items-center gap-4">
                 {tenantForm.logoUrl ? (
                   <img src={tenantForm.logoUrl} alt="Logo preview" className="h-12 object-contain bg-slate-50 rounded border border-slate-200 p-1" />
@@ -191,15 +195,34 @@ export function Settings() {
                     <Building size={24} />
                   </div>
                 )}
-                <input
-                  type="url"
-                  value={tenantForm.logoUrl}
-                  onChange={(e) => setTenantForm({ ...tenantForm, logoUrl: e.target.value })}
-                  placeholder="https://exemplo.com/logo.png"
-                  className="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-yellow-600 sm:text-sm sm:leading-6"
-                />
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setTenantForm({ ...tenantForm, logoUrl: reader.result as string });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+                  />
+                  {tenantForm.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setTenantForm({ ...tenantForm, logoUrl: '' })}
+                      className="mt-2 text-sm text-red-600 hover:text-red-500"
+                    >
+                      Remover logo
+                    </button>
+                  )}
+                </div>
               </div>
-              <p className="mt-1 text-xs text-slate-500">Insira o link direto para a imagem da sua logo (PNG, JPG ou SVG).</p>
+              <p className="mt-1 text-xs text-slate-500">Faça o upload de uma imagem (PNG, JPG ou SVG) para a logo do seu escritório.</p>
             </div>
 
             <div>
