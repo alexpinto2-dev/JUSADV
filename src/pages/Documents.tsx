@@ -14,11 +14,11 @@ export function Documents() {
   const { customVars } = useCustomVars();
   
   const [selectedClient, setSelectedClient] = useState(clientId || '');
-  const [docType, setDocType] = useState<DocumentType | string>('procuracao');
+  const [docType, setDocType] = useState<string>('procuracao');
   const [dynamicValues, setDynamicValues] = useState<Record<string, string>>({});
   
   const client = clients.find(c => c.id === selectedClient);
-  const template = templates.find(t => t.id === docType);
+  const template = templates.find(t => t.type === docType);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Parse template to find dynamic variables
@@ -137,7 +137,7 @@ export function Documents() {
                   className="mt-1 block w-full rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-yellow-500 focus:outline-none focus:ring-yellow-500 sm:text-sm border ring-1 ring-slate-200"
                 >
                   {templates.map(t => (
-                    <option key={t.id} value={t.id}>{t.title}</option>
+                    <option key={t.id} value={t.type}>{t.title}</option>
                   ))}
                 </select>
               </div>
@@ -181,11 +181,18 @@ export function Documents() {
         <div className="lg:col-span-3">
           <div className="bg-slate-100 p-8 rounded-lg min-h-[800px] flex items-start justify-center overflow-auto border border-slate-200">
             {selectedClient && template ? (
-              <div 
-                ref={printRef} 
-                className="bg-white p-10 shadow-lg max-w-3xl w-full mx-auto"
-                dangerouslySetInnerHTML={{ __html: getProcessedContent() }}
-              />
+              <div className="w-full max-w-3xl flex flex-col gap-2">
+                <div className="bg-blue-50 text-blue-700 p-3 rounded-md text-sm border border-blue-200 flex items-center justify-between">
+                  <span>Você pode editar o texto do documento diretamente na tela abaixo antes de imprimir.</span>
+                </div>
+                <div 
+                  ref={printRef} 
+                  contentEditable={true}
+                  suppressContentEditableWarning={true}
+                  className="bg-white p-10 shadow-lg w-full mx-auto outline-none focus:ring-2 focus:ring-yellow-500 min-h-[800px]"
+                  dangerouslySetInnerHTML={{ __html: getProcessedContent() }}
+                />
+              </div>
             ) : (
               <div className="text-center text-slate-500 mt-20">
                 <FileText className="mx-auto h-12 w-12 text-slate-400 mb-4" />

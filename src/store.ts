@@ -393,16 +393,16 @@ export function useTemplates() {
   }, [tenantId]);
 
   const updateTemplate = async (id: string, content: string) => {
+    if (!tenantId) return;
+    const docId = `${tenantId}_${id}`;
     try {
-      await updateDoc(doc(db, 'templates', id), { content });
+      await updateDoc(doc(db, 'templates', docId), { content });
     } catch (error) {
       // If it doesn't exist, we might need to create it
-      if (tenantId) {
-        try {
-          await setDoc(doc(db, 'templates', id), { id, tenantId, type: id, title: id, content });
-        } catch (e) {
-          handleFirestoreError(e, OperationType.CREATE, 'templates');
-        }
+      try {
+        await setDoc(doc(db, 'templates', docId), { id, tenantId, type: id, title: id.charAt(0).toUpperCase() + id.slice(1), content });
+      } catch (e) {
+        handleFirestoreError(e, OperationType.CREATE, 'templates');
       }
     }
   };

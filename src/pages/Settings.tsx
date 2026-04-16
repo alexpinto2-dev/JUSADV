@@ -32,8 +32,19 @@ export function Settings() {
   const [varForm, setVarForm] = useState({ key: '', value: '' });
 
   // Template form state
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(templates[0]?.id || '');
-  const [templateContent, setTemplateContent] = useState<string>(templates[0]?.content || '');
+  const defaultTemplateTypes = ['procuracao', 'contrato', 'hipossuficiencia'];
+  const [selectedTemplateType, setSelectedTemplateType] = useState<string>(defaultTemplateTypes[0]);
+  const [templateContent, setTemplateContent] = useState<string>('');
+
+  // Update template content when templates load or type changes
+  React.useEffect(() => {
+    const template = templates.find(t => t.type === selectedTemplateType);
+    if (template) {
+      setTemplateContent(template.content);
+    } else {
+      setTemplateContent('');
+    }
+  }, [templates, selectedTemplateType]);
 
   if (loading) {
     return <div className="flex h-full items-center justify-center text-zinc-500">Carregando configurações...</div>;
@@ -91,16 +102,18 @@ export function Settings() {
     setIsVarModalOpen(false);
   };
 
-  const handleTemplateChange = (id: string) => {
-    setSelectedTemplateId(id);
-    const template = templates.find(t => t.id === id);
+  const handleTemplateChange = (type: string) => {
+    setSelectedTemplateType(type);
+    const template = templates.find(t => t.type === type);
     if (template) {
       setTemplateContent(template.content);
+    } else {
+      setTemplateContent('');
     }
   };
 
   const handleSaveTemplate = () => {
-    updateTemplate(selectedTemplateId, templateContent);
+    updateTemplate(selectedTemplateType, templateContent);
     alert('Modelo salvo com sucesso!');
   };
 
@@ -353,15 +366,18 @@ export function Settings() {
           <div className="lg:col-span-1 space-y-4">
             <h2 className="text-lg font-medium text-slate-900">Modelos</h2>
             <div className="space-y-2">
-              {templates.map(template => (
-                <button
-                  key={template.id}
-                  onClick={() => handleTemplateChange(template.id)}
-                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium ${selectedTemplateId === template.id ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}
-                >
-                  {template.title}
-                </button>
-              ))}
+              {defaultTemplateTypes.map(type => {
+                const template = templates.find(t => t.type === type);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => handleTemplateChange(type)}
+                    className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium ${selectedTemplateType === type ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'}`}
+                  >
+                    {template?.title || type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                );
+              })}
             </div>
             <div className="pt-4 border-t border-slate-200">
               <p className="text-xs text-slate-500 mb-2">Variáveis do Cliente:</p>
