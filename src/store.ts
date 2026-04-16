@@ -279,12 +279,18 @@ export function useUsers() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    const q = collection(db, 'users');
+    let q;
+    if (tenantId) {
+      q = query(collection(db, 'users'), where('tenantId', '==', tenantId));
+    } else {
+      q = collection(db, 'users');
+    }
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setAllUsers(data);
       if (tenantId) {
-        setUsers(data.filter(u => u.tenantId === tenantId || u.role === 'superadmin'));
+        setUsers(data.filter(u => u.role !== 'superadmin'));
       } else {
         setUsers(data);
       }

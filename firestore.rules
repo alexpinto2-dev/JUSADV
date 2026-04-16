@@ -30,20 +30,34 @@ service cloud.firestore {
       );
     }
 
+    function isTenantAdmin(tenantId) {
+      return isAuthenticated() && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+         getUserTenantId() == tenantId)
+      );
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
 
     match /users/{userId} {
       allow read: if isAuthenticated() && (isSuperAdmin() || request.auth.uid == userId || getUserTenantId() == resource.data.tenantId);
-      allow create: if isAuthenticated() && (isSuperAdmin() || (request.resource.data.tenantId == getUserTenantId() && request.resource.data.role != 'superadmin'));
-      allow update: if isAuthenticated() && (isSuperAdmin() || (request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.tenantId == resource.data.tenantId));
-      allow delete: if isSuperAdmin();
+      allow create: if isTenantAdmin(request.resource.data.tenantId) && request.resource.data.role != 'superadmin';
+      allow update: if isAuthenticated() && (
+        isSuperAdmin() || 
+        (request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.tenantId == resource.data.tenantId) ||
+        (isTenantAdmin(resource.data.tenantId) && request.resource.data.tenantId == resource.data.tenantId && request.resource.data.role != 'superadmin')
+      );
+      allow delete: if isSuperAdmin() || isTenantAdmin(resource.data.tenantId);
     }
 
     match /tenants/{tenantId} {
       allow read: if true; // Needed for routing before login
-      allow create, update, delete: if isSuperAdmin();
+      allow create, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
     }
 
     match /clients/{clientId} {
