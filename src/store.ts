@@ -483,3 +483,55 @@ export function useAuth() {
 
   return { currentUser, login, logout, loading };
 }
+
+export interface JurisprudenceRecord {
+  id: string;
+  tenantId: string;
+  tribunal: string;
+  processo: string;
+  data: string;
+  orgao_julgador: string;
+  status: string;
+  fonte: string;
+  ementa?: string;
+  relator?: string;
+  savedAt: string;
+}
+
+export function useJurisprudence() {
+  const { currentTenant } = useCurrentTenant();
+  const tenantId = currentTenant?.id;
+  const [savedJurisprudences, setSavedJurisprudences] = useState<JurisprudenceRecord[]>([]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    const q = query(collection(db, 'jurisprudences'), where('tenantId', '==', tenantId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JurisprudenceRecord));
+      setSavedJurisprudences(data);
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'jurisprudences'));
+    return () => unsubscribe();
+  }, [tenantId]);
+
+  const saveJurisprudence = async (record: Omit<JurisprudenceRecord, 'id' | 'tenantId' | 'savedAt'>) => {
+    if (!tenantId) return null;
+    const id = crypto.randomUUID();
+    const newRecord = { ...record, id, tenantId, savedAt: new Date().toISOString() };
+    try {
+      await setDoc(doc(db, 'jurisprudences', id), newRecord);
+      return newRecord;
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'jurisprudences');
+    }
+  };
+
+  const deleteJurisprudence = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'jurisprudences', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'jurisprudences');
+    }
+  };
+
+  return { savedJurisprudences, saveJurisprudence, deleteJurisprudence };
+}

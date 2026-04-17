@@ -101,5 +101,12 @@ service cloud.firestore {
       allow update: if isTenantUser(resource.data.tenantId) && request.resource.data.tenantId == resource.data.tenantId;
       allow delete: if isTenantUser(resource.data.tenantId);
     }
+
+    match /jurisprudences/{jurisprudenceId} {
+      allow read: if isTenantUser(resource.data.tenantId);
+      allow create: if isTenantUser(request.resource.data.tenantId);
+      allow update: if isTenantUser(resource.data.tenantId) && request.resource.data.tenantId == resource.data.tenantId;
+      allow delete: if isTenantUser(resource.data.tenantId);
+    }
   }
 }

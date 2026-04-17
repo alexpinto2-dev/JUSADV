@@ -20,6 +20,7 @@ export function Sidebar() {
     { name: 'Clientes', href: getTenantPath('/clients'), icon: Users },
     { name: 'Processos', href: getTenantPath('/processes'), icon: Scale },
     { name: 'Calendário', href: getTenantPath('/calendar'), icon: CalendarIcon },
+    { name: 'Jurisprudência', href: getTenantPath('/jurisprudence'), icon: Scale },
     { name: 'Documentos', href: getTenantPath('/documents'), icon: FileText },
     { name: 'Financeiro', href: getTenantPath('/finance'), icon: DollarSign },
   ];

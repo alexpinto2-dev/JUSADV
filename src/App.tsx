@@ -15,6 +15,7 @@ import { Login } from './pages/Login';
 import { Processes } from './pages/Processes';
 import { ProcessDetails } from './pages/ProcessDetails';
 import { Calendar } from './pages/Calendar';
+import { Jurisprudence } from './pages/Jurisprudence';
 import { WorkspaceSelector } from './pages/WorkspaceSelector';
 import { SuperAdminLogin, SuperAdminDashboard } from './pages/SuperAdmin';
 import { TenantProvider, useCurrentTenant } from './contexts/TenantContext';
@@ -64,6 +65,7 @@ function TenantRoutes() {
         <Route path="processes" element={<Processes />} />
         <Route path="processes/:id" element={<ProcessDetails />} />
         <Route path="calendar" element={<Calendar />} />
+        <Route path="jurisprudence" element={<Jurisprudence />} />
         <Route path="documents" element={<Documents />} />
         <Route path="finance" element={<Finance />} />
         <Route path="settings" element={<Settings />} />
