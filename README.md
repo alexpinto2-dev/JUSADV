@@ -43,6 +43,10 @@ Contribuições são bem-vindas!
 5. Abra um Pull Request
 
 📄 Licença
-Este projeto está sob a licença MIT. Veja o arquivo [Parece que o resultado não era seguro para exibição. Vamos mudar as coisas e tentar outra opção!] para mais detalhes.
+Este projeto está sob a licença MIT.
+
+MIT License
+Copyright (c) 2026 Alexandre Pinto
+Permission is hereby granted, free of charge, to any person obtaining a copy...
 
 Desenvolvido por Alexandre Pinto (github.com/alexpinto2-dev)
