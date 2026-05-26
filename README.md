@@ -1,20 +1,48 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# JUSADV ⚖️
+Sistema para Advogados
 
-# Run and deploy your AI Studio app
+## 📌 Sobre o Projeto
+O **JUSADV** é uma aplicação voltada para escritórios de advocacia e profissionais do direito, oferecendo ferramentas para gestão de processos, clientes e prazos de forma simples e eficiente.
 
-This contains everything you need to run your app locally.
+## 🚀 Funcionalidades
+- Cadastro e gerenciamento de clientes
+- Controle de processos jurídicos
+- Agenda de compromissos e prazos
+- Relatórios personalizados
+- Interface amigável e responsiva
 
-View your app in AI Studio: https://ai.studio/apps/c12598f8-ae62-412f-bcfa-dc4cef9c318d
+## 🛠️ Tecnologias Utilizadas
+- **Frontend:** React / Next.js
+- **Backend:** Node.js / Express
+- **Banco de Dados:** PostgreSQL
+- **Autenticação:** JWT
+- **Hospedagem:** GitHub + Vercel (ou outra)
 
-## Run Locally
+## 📂 Estrutura do Projeto
+/src
+/components
+/pages
+/services
+/models
 
-**Prerequisites:**  Node.js
+## 📦 Instalação
+Clone o repositório e instale as dependências:
+```bash
+git clone https://github.com/alexpinto2-dev/JUSADV.git
+cd JUSADV
+npm install
+npm run dev
 
+🧑‍💻 Contribuição
+Contribuições são bem-vindas!
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. Faça um fork do projeto
+2. Crie uma branch (git checkout -b feature/nova-funcionalidade)
+3. Commit suas alterações (git commit -m 'Adiciona nova funcionalidade')
+4. Faça o push (git push origin feature/nova-funcionalidade)
+5. Abra um Pull Request
+
+📄 Licença
+Este projeto está sob a licença MIT. Veja o arquivo [Parece que o resultado não era seguro para exibição. Vamos mudar as coisas e tentar outra opção!] para mais detalhes.
+
+Desenvolvido por Alexandre Pinto (github.com/alexpinto2-dev)
